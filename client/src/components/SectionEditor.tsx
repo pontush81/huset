@@ -69,8 +69,13 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
   
   // Update section mutation
   const updateMutation = useMutation({
-    mutationFn: () => 
-      apiRequest("PATCH", `/api/sections/${section.id}`, { content: combineContent() }),
+    mutationFn: () => {
+      // Ensure we're using the numeric ID
+      if (typeof section.id !== 'number') {
+        throw new Error('Invalid section ID');
+      }
+      return apiRequest("PATCH", `/api/sections/${section.id}`, { content: combineContent() });
+    },
     onSuccess: () => {
       toast({
         title: "Innehållet uppdaterat",
@@ -87,6 +92,7 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
         description: error.message,
         variant: "destructive",
       });
+      console.error("Error updating section:", error, section);
     },
   });
 

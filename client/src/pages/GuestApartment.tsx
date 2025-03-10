@@ -6,6 +6,8 @@ import BookingForm from "@/components/BookingForm";
 import SectionEditor from "@/components/SectionEditor";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import FileUploader from "@/components/FileUploader";
+import DocumentList from "@/components/DocumentList";
 
 export default function GuestApartment() {
   const [isEditing, setIsEditing] = useState(false);
@@ -120,6 +122,15 @@ export default function GuestApartment() {
               )}
               
 
+            </div>
+            
+            {/* Document section */}
+            <div className="mt-8 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold">Dokument</h3>
+                <FileUploader category="gastlagenhet" />
+              </div>
+              <DocumentList category="gastlagenhet" limit={5} />
             </div>
             
             {/* Booking form component */}
