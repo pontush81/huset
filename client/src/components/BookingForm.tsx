@@ -51,8 +51,9 @@ export default function BookingForm() {
       apartmentNumber: "",
       email: "",
       phone: "",
-      checkInDate: new Date(),
-      checkOutDate: new Date(),
+      // Convert Date to string format for the form
+      checkInDate: format(new Date(), 'yyyy-MM-dd'),
+      checkOutDate: format(new Date(), 'yyyy-MM-dd'),
       guestCount: 1,
       message: "",
       terms: false,
@@ -111,7 +112,8 @@ export default function BookingForm() {
         checkIn: date,
         checkOut: null,
       });
-      form.setValue("checkInDate", date);
+      // Format the date as a string for the form
+      form.setValue("checkInDate", format(date, 'yyyy-MM-dd'));
     } 
     // If only check-in selected, set check-out
     else if (selectedDates.checkIn && !selectedDates.checkOut) {
@@ -121,15 +123,17 @@ export default function BookingForm() {
           ...selectedDates,
           checkOut: date,
         });
-        form.setValue("checkOutDate", date);
+        // Format the date as a string for the form
+        form.setValue("checkOutDate", format(date, 'yyyy-MM-dd'));
       } else {
         // If selected date is before check-in, swap them
         setSelectedDates({
           checkIn: date,
           checkOut: selectedDates.checkIn,
         });
-        form.setValue("checkInDate", date);
-        form.setValue("checkOutDate", selectedDates.checkIn);
+        // Format the dates as strings for the form
+        form.setValue("checkInDate", format(date, 'yyyy-MM-dd'));
+        form.setValue("checkOutDate", format(selectedDates.checkIn, 'yyyy-MM-dd'));
       }
     }
   };
