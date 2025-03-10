@@ -174,9 +174,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a booking
   app.post("/api/bookings", async (req: Request, res: Response) => {
     try {
+      console.log("Received booking request:", req.body);
+      
       const parsedData = insertBookingSchema.safeParse(req.body);
       
       if (!parsedData.success) {
+        console.log("Validation error:", parsedData.error);
         return res.status(400).json({ 
           error: fromZodError(parsedData.error).message 
         });
@@ -189,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate dates
       if (checkInDate >= checkOutDate) {
         return res.status(400).json({
-          error: "Check-out date must be after check-in date"
+          error: "Utcheckningsdatumet måste vara efter incheckningsdatumet"
         });
       }
       
@@ -201,20 +204,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (overlappingBookings.length > 0) {
         return res.status(400).json({
-          error: "The guest apartment is not available for the selected dates"
+          error: "Gästlägenheten är inte tillgänglig för de valda datumen"
         });
       }
       
+      // Handle the date conversion correctly for storage
       const booking = await storage.createBooking({
         ...parsedData.data,
-        checkInDate,
-        checkOutDate
+        // Keep original string format for the storage layer
+        checkInDate: parsedData.data.checkInDate,
+        checkOutDate: parsedData.data.checkOutDate
       });
       
       res.status(201).json(booking);
     } catch (error) {
       console.error("Error creating booking:", error);
-      res.status(500).json({ error: "Failed to create booking" });
+      res.status(500).json({ error: "Det gick inte att skapa bokningen" });
     }
   });
   

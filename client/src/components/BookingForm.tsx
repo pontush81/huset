@@ -82,13 +82,24 @@ export default function BookingForm() {
 
   // Handle form submission
   const onSubmit = (data: BookingFormValues) => {
+    // Check if dates are selected
+    if (!selectedDates.checkIn || !selectedDates.checkOut) {
+      toast({
+        title: "Datum saknas",
+        description: "Du måste välja både in- och utcheckningsdatum",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Format dates properly for the API
     const formattedData = {
       ...data,
-      checkInDate: format(selectedDates.checkIn || new Date(), 'yyyy-MM-dd'),
-      checkOutDate: format(selectedDates.checkOut || new Date(), 'yyyy-MM-dd'),
+      checkInDate: format(selectedDates.checkIn, 'yyyy-MM-dd'),
+      checkOutDate: format(selectedDates.checkOut, 'yyyy-MM-dd'),
     };
     
+    console.log("Submitting booking:", formattedData);
     bookingMutation.mutate(formattedData);
   };
 

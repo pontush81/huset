@@ -160,7 +160,13 @@ export class MemStorage implements IStorage {
   async createDocument(insertDocument: InsertDocument): Promise<Document> {
     const id = this.documentCurrentId++;
     const now = new Date();
-    const document: Document = { ...insertDocument, id, uploadedAt: now };
+    const document: Document = { 
+      ...insertDocument, 
+      id, 
+      uploadedAt: now,
+      // Ensure description is never undefined
+      description: insertDocument.description || null
+    };
     this.documents.set(id, document);
     return document;
   }
@@ -185,7 +191,9 @@ export class MemStorage implements IStorage {
       ...insertBooking, 
       id, 
       status: 'pending', 
-      createdAt: now 
+      createdAt: now,
+      // Ensure message is never undefined
+      message: insertBooking.message || null
     };
     this.bookings.set(id, booking);
     return booking;
@@ -227,7 +235,13 @@ export class MemStorage implements IStorage {
   async createSection(insertSection: InsertSection): Promise<Section> {
     const id = this.sectionCurrentId++;
     const now = new Date();
-    const section: Section = { ...insertSection, id, updatedAt: now };
+    const section: Section = { 
+      ...insertSection, 
+      id, 
+      updatedAt: now,
+      // Ensure icon is never undefined
+      icon: insertSection.icon || "fa-file-alt"
+    };
     this.sections.set(id, section);
     return section;
   }
