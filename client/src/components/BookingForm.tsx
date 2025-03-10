@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { sv } from "date-fns/locale";
 import { insertBookingSchema } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Calendar from "./Calendar";
 import { 
@@ -69,8 +69,12 @@ export default function BookingForm() {
         title: "Bokningsförfrågan skickad",
         description: "Vi kommer att kontakta dig inom kort för att bekräfta bokningen.",
       });
+      // Reset form and selected dates
       form.reset();
       setSelectedDates({ checkIn: null, checkOut: null });
+      
+      // Invalidate the availability cache to refresh the calendar
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings/availability'] });
     },
     onError: (error: Error) => {
       toast({

@@ -28,10 +28,8 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
   
   // Get bookings for availability check
   const { data: bookings, isLoading } = useQuery<BookingDate[]>({
-    queryKey: ['/api/bookings/availability', {
-      startDate: startOfMonth(subMonths(currentMonth, 1)).toISOString(),
-      endDate: endOfMonth(addMonths(currentMonth, 1)).toISOString()
-    }],
+    queryKey: ['/api/bookings/availability', format(currentMonth, 'yyyy-MM')],
+    queryFn: () => fetch(`/api/bookings/availability?startDate=${format(startOfMonth(subMonths(currentMonth, 1)), 'yyyy-MM-dd')}&endDate=${format(endOfMonth(addMonths(currentMonth, 1)), 'yyyy-MM-dd')}`).then(res => res.json()),
   });
 
   // Helper to check if a date is booked
