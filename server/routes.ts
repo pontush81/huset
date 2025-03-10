@@ -55,6 +55,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update section content
+  app.patch("/api/sections/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { content } = req.body;
+      
+      if (!content || typeof content !== 'string') {
+        return res.status(400).json({ error: "Content is required and must be a string" });
+      }
+      
+      const sectionId = parseInt(id);
+      if (isNaN(sectionId)) {
+        return res.status(400).json({ error: "Invalid section ID" });
+      }
+      
+      const updatedSection = await storage.updateSection(sectionId, content);
+      
+      if (!updatedSection) {
+        return res.status(404).json({ error: "Section not found" });
+      }
+      
+      res.json(updatedSection);
+    } catch (error) {
+      console.error("Error updating section:", error);
+      res.status(500).json({ error: "Failed to update section" });
+    }
+  });
+  
   // Get all documents
   app.get("/api/documents", async (req: Request, res: Response) => {
     try {

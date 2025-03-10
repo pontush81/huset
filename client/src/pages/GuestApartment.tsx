@@ -1,11 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { Section } from "@shared/schema";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import BookingForm from "@/components/BookingForm";
+import SectionEditor from "@/components/SectionEditor";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function GuestApartment() {
+  const [isEditing, setIsEditing] = useState(false);
+  
   // Fetch guest apartment section content
   const { data: section, isLoading } = useQuery<Section>({
     queryKey: ['/api/sections/gastlagenhet'],
@@ -55,40 +59,55 @@ export default function GuestApartment() {
 
   return (
     <section id="gastlagenhet" className="mb-8">
-      <Card className="bg-white rounded-lg shadow-md">
-        <CardContent className="p-6">
-          <h2 className="text-2xl font-semibold mb-4">Gästlägenhet</h2>
-          
-          <div className="mb-6">
-            <p className="mb-4">{section.content}</p>
-            
-            <div className="bg-secondary p-4 rounded-lg mb-4">
-              <h3 className="font-semibold mb-2">Information:</h3>
-              <ul className="list-disc pl-5 space-y-2">
-                <li>Pris: 300 kr per natt</li>
-                <li>Max 7 dagar per bokning</li>
-                <li>Bokas tidigast 3 månader i förväg</li>
-                <li>Incheckning: 15:00, utcheckning: 11:00</li>
-                <li>Städning ingår inte, lägenheten ska lämnas i samma skick som vid ankomst</li>
-              </ul>
-            </div>
-            
-            <div className="flex flex-wrap gap-3 mb-6">
-              <a href="/api/documents/1/file" target="_blank" rel="noopener noreferrer" className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded flex items-center">
-                <i className="fas fa-download mr-2"></i>
-                <span>Regler (PDF)</span>
-              </a>
-              <Button variant="default" className="bg-primary hover:bg-primary/90 text-white">
-                <i className="fas fa-images mr-2"></i>
-                <span>Bildgalleri</span>
+      {isEditing ? (
+        <SectionEditor section={section} onCancel={() => setIsEditing(false)} />
+      ) : (
+        <Card className="bg-white rounded-lg shadow-md">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold">Gästlägenhet</h2>
+              <Button 
+                onClick={() => setIsEditing(true)}
+                size="sm"
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <i className="fas fa-edit"></i>
+                Redigera
               </Button>
             </div>
-          </div>
-          
-          {/* Booking form component */}
-          <BookingForm />
-        </CardContent>
-      </Card>
+            
+            <div className="mb-6">
+              <p className="mb-4">{section.content}</p>
+              
+              <div className="bg-secondary p-4 rounded-lg mb-4">
+                <h3 className="font-semibold mb-2">Information:</h3>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>Pris: 300 kr per natt</li>
+                  <li>Max 7 dagar per bokning</li>
+                  <li>Bokas tidigast 3 månader i förväg</li>
+                  <li>Incheckning: 15:00, utcheckning: 11:00</li>
+                  <li>Städning ingår inte, lägenheten ska lämnas i samma skick som vid ankomst</li>
+                </ul>
+              </div>
+              
+              <div className="flex flex-wrap gap-3 mb-6">
+                <a href="/api/documents/1/file" target="_blank" rel="noopener noreferrer" className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded flex items-center">
+                  <i className="fas fa-download mr-2"></i>
+                  <span>Regler (PDF)</span>
+                </a>
+                <Button variant="default" className="bg-primary hover:bg-primary/90 text-white">
+                  <i className="fas fa-images mr-2"></i>
+                  <span>Bildgalleri</span>
+                </Button>
+              </div>
+            </div>
+            
+            {/* Booking form component */}
+            <BookingForm />
+          </CardContent>
+        </Card>
+      )}
     </section>
   );
 }
