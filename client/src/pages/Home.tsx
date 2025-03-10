@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import DocumentList from "@/components/DocumentList";
 import { Skeleton } from "@/components/ui/skeleton";
 import SectionEditor from "@/components/SectionEditor";
+import FileUploader from "@/components/FileUploader";
 
 export default function Home() {
   const params = useParams();
@@ -113,7 +114,10 @@ export default function Home() {
           
           {/* Document list for this section */}
           <div className="mt-8">
-            <h3 className="text-xl font-semibold mb-4">Dokument</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">Dokument</h3>
+              <FileUploader category={displaySection.slug} />
+            </div>
             <DocumentList category={displaySection.slug} limit={5} />
           </div>
         </CardContent>

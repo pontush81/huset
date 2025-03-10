@@ -33,14 +33,8 @@ export default function GuestApartment() {
       } else {
         // If no info box tags found, use the full content
         setMainContent(section.content);
-        // Default info items if needed
-        setInfoItems([
-          "Pris: 300 kr per natt",
-          "Max 7 dagar per bokning",
-          "Bokas tidigast 3 månader i förväg",
-          "Incheckning: 15:00, utcheckning: 11:00",
-          "Städning ingår inte, lägenheten ska lämnas i samma skick som vid ankomst"
-        ]);
+        // Use empty info items by default
+        setInfoItems([]);
       }
     }
   }, [section]);
@@ -125,16 +119,7 @@ export default function GuestApartment() {
                 </div>
               )}
               
-              <div className="flex flex-wrap gap-3 mb-6">
-                <a href="/api/documents/1/file" target="_blank" rel="noopener noreferrer" className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded flex items-center">
-                  <i className="fas fa-download mr-2"></i>
-                  <span>Regler (PDF)</span>
-                </a>
-                <Button variant="default" className="bg-primary hover:bg-primary/90 text-white">
-                  <i className="fas fa-images mr-2"></i>
-                  <span>Bildgalleri</span>
-                </Button>
-              </div>
+
             </div>
             
             {/* Booking form component */}
