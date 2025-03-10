@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Document } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,19 @@ import {
 import { format } from "date-fns";
 import { sv } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface DocumentListProps {
   category?: string;
@@ -22,11 +35,41 @@ interface DocumentListProps {
 
 export default function DocumentList({ category, limit }: DocumentListProps) {
   const [expanded, setExpanded] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
+  const { toast } = useToast();
   
   // Fetch documents
   const { data: documents, isLoading } = useQuery<Document[]>({
     queryKey: ['/api/documents', { category }],
   });
+  
+  // Delete document mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => 
+      apiRequest("DELETE", `/api/documents/${id}`),
+    onSuccess: () => {
+      toast({
+        title: "Dokument borttaget",
+        description: "Dokumentet har tagits bort framgångsrikt.",
+      });
+      // Invalidate document queries to refresh list
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      setDocumentToDelete(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ett fel uppstod",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const handleDelete = () => {
+    if (documentToDelete) {
+      deleteMutation.mutate(documentToDelete.id);
+    }
+  };
   
   // Filter and limit documents if needed
   const displayDocuments = documents
@@ -84,7 +127,7 @@ export default function DocumentList({ category, limit }: DocumentListProps) {
                 <TableCell>
                   {format(new Date(doc.uploadedAt), "d MMM yyyy", { locale: sv })}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right space-x-4">
                   <a 
                     href={`/api/documents/${doc.id}/file`} 
                     target="_blank" 
@@ -93,6 +136,39 @@ export default function DocumentList({ category, limit }: DocumentListProps) {
                   >
                     <i className="fas fa-download mr-1"></i> Ladda ner
                   </a>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-destructive hover:text-destructive/90"
+                        onClick={() => setDocumentToDelete(doc)}
+                      >
+                        <i className="fas fa-trash mr-1"></i> Ta bort
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Är du säker?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Detta kommer att permanent ta bort dokumentet "{documentToDelete?.title}".
+                          Du kan inte ångra denna åtgärd.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setDocumentToDelete(null)}>
+                          Avbryt
+                        </AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {deleteMutation.isPending ? "Tar bort..." : "Ta bort"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </TableCell>
               </TableRow>
             ))}
