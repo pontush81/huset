@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Section } from "@shared/schema";
@@ -6,10 +6,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import DocumentList from "@/components/DocumentList";
 import { Skeleton } from "@/components/ui/skeleton";
+import SectionEditor from "@/components/SectionEditor";
 
 export default function Home() {
   const params = useParams();
   const currentSlug = params.section || "ellagarden"; // Default to Ellagarden section
+  const [isEditing, setIsEditing] = useState(false);
   
   // Fetch all sections
   const { data: sections, isLoading: sectionsLoading } = useQuery<Section[]>({
@@ -73,15 +75,36 @@ export default function Home() {
     );
   }
 
+  if (isEditing && displaySection) {
+    return (
+      <SectionEditor 
+        section={displaySection} 
+        onCancel={() => setIsEditing(false)} 
+      />
+    );
+  }
+
   return (
     <section className="mb-8">
       <Card className="bg-white rounded-lg shadow-md">
         <CardContent className="p-6">
-          <div className="flex items-center mb-4">
-            <div className="bg-primary/10 w-10 h-10 rounded-full flex items-center justify-center mr-3">
-              <i className={`fas ${getIconClass()} text-primary`}></i>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center">
+              <div className="bg-primary/10 w-10 h-10 rounded-full flex items-center justify-center mr-3">
+                <i className={`fas ${getIconClass()} text-primary`}></i>
+              </div>
+              <h2 className="text-2xl font-semibold">{displaySection.title}</h2>
             </div>
-            <h2 className="text-2xl font-semibold">{displaySection.title}</h2>
+            
+            <Button 
+              onClick={() => setIsEditing(true)}
+              size="sm"
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <i className="fas fa-edit"></i>
+              Redigera
+            </Button>
           </div>
           
           <div className="mb-6 whitespace-pre-line">

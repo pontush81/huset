@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Section } from "@shared/schema";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import BookingForm from "@/components/BookingForm";
 import SectionEditor from "@/components/SectionEditor";
@@ -9,11 +9,41 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function GuestApartment() {
   const [isEditing, setIsEditing] = useState(false);
+  const [infoItems, setInfoItems] = useState<string[]>([]);
+  const [mainContent, setMainContent] = useState("");
   
   // Fetch guest apartment section content
   const { data: section, isLoading } = useQuery<Section>({
     queryKey: ['/api/sections/gastlagenhet'],
   });
+  
+  // Parse section content to extract info box items
+  useEffect(() => {
+    if (section) {
+      const infoBoxMatch = section.content.match(/\[INFO_BOX\]([\s\S]*?)\[\/INFO_BOX\]/);
+      
+      if (infoBoxMatch && infoBoxMatch[1]) {
+        // Extract the info items and set them
+        const items = infoBoxMatch[1].trim().split("\n");
+        setInfoItems(items);
+        
+        // Remove the info box from the main content
+        const content = section.content.replace(/\[INFO_BOX\]([\s\S]*?)\[\/INFO_BOX\]/, "").trim();
+        setMainContent(content);
+      } else {
+        // If no info box tags found, use the full content
+        setMainContent(section.content);
+        // Default info items if needed
+        setInfoItems([
+          "Pris: 300 kr per natt",
+          "Max 7 dagar per bokning",
+          "Bokas tidigast 3 månader i förväg",
+          "Incheckning: 15:00, utcheckning: 11:00",
+          "Städning ingår inte, lägenheten ska lämnas i samma skick som vid ankomst"
+        ]);
+      }
+    }
+  }, [section]);
 
   if (isLoading) {
     return (
@@ -60,7 +90,11 @@ export default function GuestApartment() {
   return (
     <section id="gastlagenhet" className="mb-8">
       {isEditing ? (
-        <SectionEditor section={section} onCancel={() => setIsEditing(false)} />
+        <SectionEditor 
+          section={section} 
+          onCancel={() => setIsEditing(false)} 
+          isGuestApartment={true}
+        />
       ) : (
         <Card className="bg-white rounded-lg shadow-md">
           <CardContent className="p-6">
@@ -78,18 +112,18 @@ export default function GuestApartment() {
             </div>
             
             <div className="mb-6">
-              <p className="mb-4">{section.content}</p>
+              <p className="mb-4">{mainContent}</p>
               
-              <div className="bg-secondary p-4 rounded-lg mb-4">
-                <h3 className="font-semibold mb-2">Information:</h3>
-                <ul className="list-disc pl-5 space-y-2">
-                  <li>Pris: 300 kr per natt</li>
-                  <li>Max 7 dagar per bokning</li>
-                  <li>Bokas tidigast 3 månader i förväg</li>
-                  <li>Incheckning: 15:00, utcheckning: 11:00</li>
-                  <li>Städning ingår inte, lägenheten ska lämnas i samma skick som vid ankomst</li>
-                </ul>
-              </div>
+              {infoItems.length > 0 && (
+                <div className="bg-secondary p-4 rounded-lg mb-4">
+                  <h3 className="font-semibold mb-2">Information:</h3>
+                  <ul className="list-disc pl-5 space-y-2">
+                    {infoItems.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               
               <div className="flex flex-wrap gap-3 mb-6">
                 <a href="/api/documents/1/file" target="_blank" rel="noopener noreferrer" className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded flex items-center">
