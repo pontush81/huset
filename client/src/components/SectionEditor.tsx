@@ -70,11 +70,13 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
   // Update section mutation
   const updateMutation = useMutation({
     mutationFn: () => {
-      // Section ID is always a number from the database
-      const sectionId = section.id;
+      // Verify that section.id exists and is valid
+      if (!section || section.id === undefined || section.id === null) {
+        throw new Error('Sektions-ID saknas. Vänligen ladda om sidan och försök igen.');
+      }
       
-      console.log("Updating section with ID:", sectionId);
-      return apiRequest("PATCH", `/api/sections/${sectionId}`, { content: combineContent() });
+      console.log("Updating section with ID:", section.id);
+      return apiRequest("PATCH", `/api/sections/${section.id}`, { content: combineContent() });
     },
     onSuccess: () => {
       toast({
@@ -83,7 +85,8 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
       });
       // Invalidate section queries to refresh content
       queryClient.invalidateQueries({ queryKey: ['/api/sections'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/sections/${section.slug}`] });
+      // Invalidate the specific section query with the correct format
+      section.slug && queryClient.invalidateQueries({ queryKey: [`/api/sections/${section.slug}`] });
       onCancel();
     },
     onError: (error: Error) => {

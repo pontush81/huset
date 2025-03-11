@@ -21,8 +21,8 @@ export default function Home() {
   
   // Fetch the current section specifically
   const { data: currentSection, isLoading: sectionLoading } = useQuery<Section>({
-    queryKey: ['/api/sections', currentSlug],
-    enabled: !!currentSlug && currentSlug !== "ellagarden", // Only fetch if we have a slug
+    queryKey: [`/api/sections/${currentSlug}`],
+    enabled: !!currentSlug, // Always fetch the current section by slug
   });
 
   // If we're on the home page with no specific section, show a welcome message
