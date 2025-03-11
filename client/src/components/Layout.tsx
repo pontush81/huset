@@ -130,21 +130,25 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
               <h3 className="text-lg font-semibold mb-2">BRF Ellagården</h3>
-              <p className="text-sm opacity-80">{footerData?.address || 'Ellagårdsvägen 123'}</p>
+              {footerData?.address && <p className="text-sm opacity-80">{footerData.address}</p>}
             </div>
             
             <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
-              <a href={`mailto:${footerData?.email || 'styrelsen@ellagarden.se'}`} className="text-sm opacity-80 hover:opacity-100">
-                <i className="fas fa-envelope mr-2"></i>{footerData?.email || 'styrelsen@ellagarden.se'}
-              </a>
-              <a href={`tel:${footerData?.phone?.replace(/[^0-9+]/g, '') || '+4681234567'}`} className="text-sm opacity-80 hover:opacity-100">
-                <i className="fas fa-phone mr-2"></i>{footerData?.phone || '08-123 45 67'}
-              </a>
+              {footerData?.email && (
+                <a href={`mailto:${footerData.email}`} className="text-sm opacity-80 hover:opacity-100">
+                  <i className="fas fa-envelope mr-2"></i>{footerData.email}
+                </a>
+              )}
+              {footerData?.phone && (
+                <a href={`tel:${footerData.phone.replace(/[^0-9+]/g, '')}`} className="text-sm opacity-80 hover:opacity-100">
+                  <i className="fas fa-phone mr-2"></i>{footerData.phone}
+                </a>
+              )}
             </div>
           </div>
           
           <div className="mt-6 pt-4 border-t border-white/20 text-center text-sm opacity-70">
-            <p>© {new Date().getFullYear()} {footerData?.copyright || 'BRF Ellagården. Alla rättigheter förbehållna.'}</p>
+            <p>© {new Date().getFullYear()} {footerData?.copyright || ''}</p>
           </div>
         </div>
       </footer>
