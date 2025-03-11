@@ -70,11 +70,14 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
   // Update section mutation
   const updateMutation = useMutation({
     mutationFn: () => {
-      // Ensure we're using the numeric ID
-      if (typeof section.id !== 'number') {
+      // Make sure we have the section ID as a number
+      const sectionId = typeof section.id === 'string' ? parseInt(section.id as string) : section.id;
+      
+      if (isNaN(sectionId)) {
         throw new Error('Invalid section ID');
       }
-      return apiRequest("PATCH", `/api/sections/${section.id}`, { content: combineContent() });
+      
+      return apiRequest("PATCH", `/api/sections/${sectionId}`, { content: combineContent() });
     },
     onSuccess: () => {
       toast({
