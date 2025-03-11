@@ -19,6 +19,9 @@ interface SectionEditorProps {
 export default function SectionEditor({ section, onCancel, isGuestApartment = false }: SectionEditorProps) {
   const { toast } = useToast();
   const [content, setContent] = useState(section.content);
+  const [title, setTitle] = useState(section.title);
+  const [slug, setSlug] = useState(section.slug);
+  const [icon, setIcon] = useState(section.icon || "fa-file-alt");
   
   // For the guest apartment page, we need to handle additional info
   const [info, setInfo] = useState<string[]>(isGuestApartment ? [
@@ -76,23 +79,32 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
       }
       
       console.log("Updating section with ID:", section.id);
-      return apiRequest("PATCH", `/api/sections/${section.id}`, { content: combineContent() });
+      return apiRequest("PATCH", `/api/sections/${section.id}`, { 
+        content: combineContent(),
+        title,
+        slug,
+        icon
+      });
     },
     onSuccess: () => {
       toast({
-        title: "Innehållet uppdaterat",
+        title: "Sektionen uppdaterad",
         description: "Sektionen har uppdaterats framgångsrikt.",
       });
       // Invalidate section queries to refresh content
       queryClient.invalidateQueries({ queryKey: ['/api/sections'] });
       // Invalidate the specific section query with the correct format
       section.slug && queryClient.invalidateQueries({ queryKey: [`/api/sections/${section.slug}`] });
+      // Invalidate with new slug if changed
+      if (slug !== section.slug) {
+        queryClient.invalidateQueries({ queryKey: [`/api/sections/${slug}`] });
+      }
       onCancel();
     },
     onError: (error: Error) => {
       toast({
         title: "Ett fel uppstod vid uppdatering",
-        description: `Det gick inte att spara innehållet: ${error.message}`,
+        description: `Det gick inte att spara sektionen: ${error.message}`,
         variant: "destructive",
       });
       console.error("Error updating section:", error);
@@ -123,26 +135,86 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
     setInfo(newInfo);
   };
 
+  // Generate slug from title
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    
+    // Only generate slug if the slug hasn't been manually edited
+    if (slug === section.slug) {
+      const newSlug = newTitle.toLowerCase()
+        .replace(/å/g, 'a').replace(/ä/g, 'a').replace(/ö/g, 'o')
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      setSlug(newSlug);
+    }
+  };
+  
   return (
     <Card className="bg-white rounded-lg shadow-md mb-4">
       <CardContent className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Redigera innehåll</h2>
+        <h2 className="text-xl font-semibold mb-4">Redigera sektion</h2>
         
-        {isGuestApartment ? (
-          <Tabs defaultValue="content" className="mb-4">
-            <TabsList>
-              <TabsTrigger value="content">Huvudinnehåll</TabsTrigger>
-              <TabsTrigger value="info">Informationsruta</TabsTrigger>
-            </TabsList>
-            <TabsContent value="content">
-              <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={10}
-                className="w-full mb-4"
-                placeholder="Skriv innehållet här..."
-              />
-            </TabsContent>
+        <Tabs defaultValue="content" className="mb-4">
+          <TabsList>
+            <TabsTrigger value="content">Innehåll</TabsTrigger>
+            <TabsTrigger value="metadata">Sektionsinfo</TabsTrigger>
+            {isGuestApartment && <TabsTrigger value="info">Informationsruta</TabsTrigger>}
+          </TabsList>
+          
+          {/* Content Tab */}
+          <TabsContent value="content">
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={10}
+              className="w-full mb-4"
+              placeholder="Skriv innehållet här..."
+            />
+          </TabsContent>
+          
+          {/* Metadata Tab */}
+          <TabsContent value="metadata">
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="title">Titel</Label>
+                <Input 
+                  id="title" 
+                  value={title} 
+                  onChange={handleTitleChange}
+                  placeholder="T.ex. Regler för tvättstugan"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="slug">URL-namn</Label>
+                <Input 
+                  id="slug" 
+                  value={slug} 
+                  onChange={(e) => setSlug(e.target.value)}
+                  placeholder="t-ex-regler-for-tvattstugan"
+                />
+                <p className="text-xs text-gray-500">URL-namnet genereras automatiskt från titeln men kan redigeras manuellt</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="icon">Ikon (Font Awesome-kod)</Label>
+                <Input 
+                  id="icon" 
+                  value={icon} 
+                  onChange={(e) => setIcon(e.target.value)}
+                  placeholder="fa-file-alt"
+                />
+                <p className="text-xs text-gray-500">
+                  Använd Font Awesome-ikon kod, t.ex. fa-home, fa-car, fa-building
+                </p>
+              </div>
+            </div>
+          </TabsContent>
+          
+          {/* Info Box Tab (Only for Guest Apartment) */}
+          {isGuestApartment && (
             <TabsContent value="info">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -182,16 +254,8 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
                 )}
               </div>
             </TabsContent>
-          </Tabs>
-        ) : (
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={10}
-            className="w-full mb-4"
-            placeholder="Skriv innehållet här..."
-          />
-        )}
+          )}
+        </Tabs>
         
         <div className="flex space-x-3">
           <Button 

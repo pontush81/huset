@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Section, Document } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import SectionEditor from "@/components/SectionEditor";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import FileUploader from "@/components/FileUploader";
 import { Trash2, Edit, FileText, ExternalLink, Plus, FileUp, Calendar, LayoutDashboard } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -18,8 +20,15 @@ export default function AdminDashboard() {
   const [currentTab, setCurrentTab] = useState<string>("sections");
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openNewSectionDialog, setOpenNewSectionDialog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [openUploadDialog, setOpenUploadDialog] = useState(false);
+  const [newSection, setNewSection] = useState({
+    title: "",
+    slug: "",
+    icon: "fa-file-alt",
+    content: "Nytt innehåll"
+  });
   const { toast } = useToast();
   
   // Fetch all sections
@@ -75,6 +84,63 @@ export default function AdminDashboard() {
     setOpenUploadDialog(true);
   };
   
+  // Create section mutation
+  const createSectionMutation = useMutation({
+    mutationFn: async (sectionData: typeof newSection) => {
+      return apiRequest("POST", "/api/sections", sectionData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sections'] });
+      setOpenNewSectionDialog(false);
+      setNewSection({
+        title: "",
+        slug: "",
+        icon: "fa-file-alt",
+        content: "Nytt innehåll"
+      });
+      toast({
+        title: "Sektion skapad",
+        description: "Sektionen har skapats framgångsrikt",
+      });
+    },
+    onError: (error: Error) => {
+      console.error("Error creating section:", error);
+      toast({
+        title: "Fel vid skapande",
+        description: `Det gick inte att skapa sektionen: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Handle slug generation from title
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const title = e.target.value;
+    setNewSection(prev => ({
+      ...prev,
+      title,
+      slug: title.toLowerCase()
+        .replace(/å/g, 'a').replace(/ä/g, 'a').replace(/ö/g, 'o')
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+    }));
+  };
+  
+  // Handle form submission
+  const handleCreateSection = () => {
+    if (!newSection.title || !newSection.slug) {
+      toast({
+        title: "Fält saknas",
+        description: "Titel och URL-namn måste fyllas i",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    createSectionMutation.mutate(newSection);
+  };
+  
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">Administratörsdashboard</h1>
@@ -128,10 +194,23 @@ export default function AdminDashboard() {
         <TabsContent value="sections" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Hantera Sektioner</CardTitle>
-              <CardDescription>
-                Redigera innehåll i de olika sektionerna av handboken.
-              </CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Hantera Sektioner</CardTitle>
+                  <CardDescription>
+                    Redigera innehåll i de olika sektionerna av handboken.
+                  </CardDescription>
+                </div>
+                
+                <Button
+                  onClick={() => setOpenNewSectionDialog(true)}
+                  className="bg-primary text-white"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Lägg till sektion
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {loadingSections ? (
@@ -325,6 +404,78 @@ export default function AdminDashboard() {
           </DialogContent>
         </Dialog>
       )}
+      
+      {/* Create New Section Dialog */}
+      <Dialog open={openNewSectionDialog} onOpenChange={setOpenNewSectionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Skapa ny sektion</DialogTitle>
+            <DialogDescription>
+              Fyll i information för att skapa en ny sektion i handboken.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Titel</Label>
+              <Input 
+                id="title" 
+                value={newSection.title} 
+                onChange={handleTitleChange}
+                placeholder="T.ex. Regler för tvättstugan"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="slug">URL-namn</Label>
+              <Input 
+                id="slug" 
+                value={newSection.slug} 
+                onChange={(e) => setNewSection({...newSection, slug: e.target.value})}
+                placeholder="t-ex-regler-for-tvattstugan"
+                disabled={!!newSection.title}
+              />
+              <p className="text-xs text-gray-500">URL-namnet genereras automatiskt från titeln</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="icon">Ikon (Font Awesome-kod)</Label>
+              <Input 
+                id="icon" 
+                value={newSection.icon} 
+                onChange={(e) => setNewSection({...newSection, icon: e.target.value})}
+                placeholder="fa-file-alt"
+              />
+              <p className="text-xs text-gray-500">
+                Använd Font Awesome-ikon kod, t.ex. fa-home, fa-car, fa-building
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenNewSectionDialog(false)}>
+              Avbryt
+            </Button>
+            <Button 
+              onClick={handleCreateSection}
+              disabled={createSectionMutation.isPending}
+              className="bg-primary text-white"
+            >
+              {createSectionMutation.isPending ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+                  Skapar...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Skapa sektion
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
