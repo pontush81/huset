@@ -23,6 +23,7 @@ import { Booking } from "@shared/schema";
 export default function BookingManager() {
   const { toast } = useToast();
   const [showCancelDialog, setShowCancelDialog] = useState<boolean>(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
 
   // Fetch all bookings
@@ -31,9 +32,13 @@ export default function BookingManager() {
   });
 
   // Export bookings mutation
-  const exportMutation = useMutation({
+  const exportMutation = useMutation<
+    { success: boolean; message: string; fileName: string; downloadUrl: string },
+    Error,
+    void
+  >({
     mutationFn: () => apiRequest("GET", "/api/bookings/export"),
-    onSuccess: (data: { downloadUrl: string }) => {
+    onSuccess: (data) => {
       toast({
         title: "Export slutförd",
         description: "Bokningarna har exporterats och kan nu laddas ner.",
@@ -71,6 +76,27 @@ export default function BookingManager() {
       });
     },
   });
+  
+  // Confirm booking mutation
+  const confirmMutation = useMutation({
+    mutationFn: (bookingId: number) => 
+      apiRequest("PATCH", `/api/bookings/${bookingId}/status`, { status: "confirmed" }),
+    onSuccess: () => {
+      toast({
+        title: "Bokning bekräftad",
+        description: "Bokningen har bekräftats.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings/availability'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Bekräftelse misslyckades",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Handle booking cancellation
   const handleCancelBooking = (bookingId: number) => {
@@ -83,6 +109,21 @@ export default function BookingManager() {
     if (selectedBookingId !== null) {
       cancelMutation.mutate(selectedBookingId);
       setShowCancelDialog(false);
+      setSelectedBookingId(null);
+    }
+  };
+  
+  // Handle booking confirmation
+  const handleConfirmBooking = (bookingId: number) => {
+    setSelectedBookingId(bookingId);
+    setShowConfirmDialog(true);
+  };
+  
+  // Confirm booking
+  const confirmBookingAction = () => {
+    if (selectedBookingId !== null) {
+      confirmMutation.mutate(selectedBookingId);
+      setShowConfirmDialog(false);
       setSelectedBookingId(null);
     }
   };
@@ -155,6 +196,14 @@ export default function BookingManager() {
         
         {booking.status === 'pending' && (
           <div className="mt-4 flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="text-green-500 border-green-500 hover:bg-green-50"
+              onClick={() => handleConfirmBooking(booking.id)}
+            >
+              Bekräfta
+            </Button>
             <Button 
               variant="outline" 
               size="sm"
@@ -255,6 +304,24 @@ export default function BookingManager() {
             <AlertDialogCancel>Avbryt</AlertDialogCancel>
             <AlertDialogAction onClick={confirmCancelBooking} className="bg-red-500 text-white">
               Avboka
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Confirmation dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bekräfta bokning</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bekräfta denna bokning? Gästen kommer att meddelas om att bokningen är bekräftad.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmBookingAction} className="bg-green-500 text-white">
+              Bekräfta
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
