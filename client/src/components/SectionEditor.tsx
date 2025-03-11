@@ -70,13 +70,10 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
   // Update section mutation
   const updateMutation = useMutation({
     mutationFn: () => {
-      // Make sure we have the section ID as a number
-      const sectionId = typeof section.id === 'string' ? parseInt(section.id as string) : section.id;
+      // Section ID is always a number from the database
+      const sectionId = section.id;
       
-      if (isNaN(sectionId)) {
-        throw new Error('Invalid section ID');
-      }
-      
+      console.log("Updating section with ID:", sectionId);
       return apiRequest("PATCH", `/api/sections/${sectionId}`, { content: combineContent() });
     },
     onSuccess: () => {
@@ -91,11 +88,12 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
     },
     onError: (error: Error) => {
       toast({
-        title: "Ett fel uppstod",
-        description: error.message,
+        title: "Ett fel uppstod vid uppdatering",
+        description: `Det gick inte att spara innehållet: ${error.message}`,
         variant: "destructive",
       });
-      console.error("Error updating section:", error, section);
+      console.error("Error updating section:", error);
+      console.log("Section being updated:", JSON.stringify(section));
     },
   });
 
