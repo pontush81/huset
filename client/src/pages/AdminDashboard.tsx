@@ -439,7 +439,7 @@ export default function AdminDashboard() {
         <TabsContent value="administration" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
                   <CardTitle>Sidfotsinställningar</CardTitle>
                   <CardDescription>
@@ -503,9 +503,10 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                           
-                          <div className="flex justify-end">
+                          <div className="flex justify-center sm:justify-end">
                             <Button
                               variant="outline"
+                              className="mobile-touch-target w-full sm:w-auto"
                               onClick={() => {
                                 setEditingSection(footerSection);
                                 setOpenDialog(true);
@@ -528,7 +529,7 @@ export default function AdminDashboard() {
       
       {/* Edit Section Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl w-[95vw] sm:w-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Redigera Sektion: {editingSection?.title}</DialogTitle>
             <DialogDescription>
@@ -558,7 +559,7 @@ export default function AdminDashboard() {
       {/* Upload Dialog */}
       {openUploadDialog && selectedCategory && (
         <Dialog open={openUploadDialog} onOpenChange={setOpenUploadDialog}>
-          <DialogContent>
+          <DialogContent className="w-[95vw] sm:w-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>Ladda upp dokument</DialogTitle>
               <DialogDescription>
@@ -577,7 +578,7 @@ export default function AdminDashboard() {
       
       {/* Create New Section Dialog */}
       <Dialog open={openNewSectionDialog} onOpenChange={setOpenNewSectionDialog}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] sm:w-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Skapa ny sektion</DialogTitle>
             <DialogDescription>
@@ -622,14 +623,18 @@ export default function AdminDashboard() {
             </div>
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenNewSectionDialog(false)}>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setOpenNewSectionDialog(false)} 
+              className="w-full sm:w-auto order-2 sm:order-1"
+            >
               Avbryt
             </Button>
             <Button 
               onClick={handleCreateSection}
               disabled={createSectionMutation.isPending}
-              className="bg-primary text-white"
+              className="bg-primary text-white w-full sm:w-auto order-1 sm:order-2 mobile-touch-target"
             >
               {createSectionMutation.isPending ? (
                 <>

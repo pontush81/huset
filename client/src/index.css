@@ -40,5 +40,26 @@
   .mobile-touch-target {
     min-height: 44px;
     min-width: 44px;
+    @apply p-2 text-base;
+  }
+  
+  /* iOS-specifika förbättringar */
+  @supports (-webkit-touch-callout: none) {
+    .ios-button-fix {
+      @apply touch-manipulation;
+    }
+    
+    .ios-tap-highlight-fix {
+      -webkit-tap-highlight-color: transparent;
+    }
+  }
+  
+  /* Responsiv typografi */
+  .responsive-text {
+    @apply text-sm md:text-base;
+  }
+  
+  .responsive-heading {
+    @apply text-xl sm:text-2xl md:text-3xl font-bold;
   }
 }
