@@ -83,7 +83,12 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                               closeSidebar();
                             }
                           }}
-                          style={{textAlign: 'left', width: '100%', backgroundColor: currentSection === section.slug ? '#f3f4f6' : 'white'}}
+                          style={{
+                            textAlign: 'left', 
+                            width: '100%', 
+                            backgroundColor: currentSection === section.slug ? '#f3f4f6' : 'white',
+                            justifyContent: 'flex-start'
+                          }}
                           className={`flex items-center text-sm md:text-base py-3 px-3 md:px-3 rounded touch-manipulation ${
                             currentSection === section.slug 
                               ? 'bg-secondary font-medium' 
@@ -104,7 +109,12 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                                 closeSidebar();
                               }
                             }}
-                            style={{textAlign: 'left', width: '100%', backgroundColor: location.includes("/admin/bokningar") ? '#f3f4f6' : 'white'}}
+                            style={{
+                              textAlign: 'left', 
+                              width: '100%', 
+                              backgroundColor: location.includes("/admin/bokningar") ? '#f3f4f6' : 'white',
+                              justifyContent: 'flex-start'
+                            }}
                             className={`flex items-center text-xs md:text-sm py-2.5 px-3 ml-4 rounded touch-manipulation ${
                               location.includes("/admin/bokningar") 
                                 ? 'bg-secondary font-medium' 
@@ -136,7 +146,12 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                           closeSidebar();
                         }
                       }}
-                      style={{textAlign: 'left', width: '100%', backgroundColor: location.includes("/admin/dashboard") ? '#f3f4f6' : 'white'}}
+                      style={{
+                        textAlign: 'left', 
+                        width: '100%', 
+                        backgroundColor: location.includes("/admin/dashboard") ? '#f3f4f6' : 'white',
+                        justifyContent: 'flex-start'
+                      }}
                       className={`flex items-center text-sm md:text-base py-3 px-3 md:px-3 rounded touch-manipulation ${
                         location.includes("/admin/dashboard") 
                           ? 'bg-secondary font-medium' 
@@ -155,7 +170,12 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                           closeSidebar();
                         }
                       }}
-                      style={{textAlign: 'left', width: '100%', backgroundColor: location.includes("/admin/bokningar") ? '#f3f4f6' : 'white'}}
+                      style={{
+                        textAlign: 'left', 
+                        width: '100%', 
+                        backgroundColor: location.includes("/admin/bokningar") ? '#f3f4f6' : 'white',
+                        justifyContent: 'flex-start'
+                      }}
                       className={`flex items-center text-sm md:text-base py-3 px-3 md:px-3 rounded touch-manipulation ${
                         location.includes("/admin/bokningar") 
                           ? 'bg-secondary font-medium' 

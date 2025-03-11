@@ -106,26 +106,16 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
   const isInSelectedRange = (date: Date) => {
     if (!selectedDates?.checkIn || !selectedDates?.checkOut) return false;
     
-    // Convert all dates to new Date objects with only year, month, day components
-    const dateObj = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const checkInObj = new Date(
-      selectedDates.checkIn.getFullYear(),
-      selectedDates.checkIn.getMonth(), 
-      selectedDates.checkIn.getDate()
-    );
-    const checkOutObj = new Date(
-      selectedDates.checkOut.getFullYear(),
-      selectedDates.checkOut.getMonth(), 
-      selectedDates.checkOut.getDate()
-    );
+    // Clear time components for accurate date comparison
+    const dayStart = startOfDay(date);
+    const checkInDay = startOfDay(selectedDates.checkIn);
+    const checkOutDay = startOfDay(selectedDates.checkOut);
     
-    // Convert to timestamps for comparison
-    const dateTime = dateObj.getTime();
-    const checkInTime = checkInObj.getTime();
-    const checkOutTime = checkOutObj.getTime();
-    
-    // Return true if date is strictly between check-in and check-out
-    return dateTime > checkInTime && dateTime < checkOutTime;
+    // Return true if date is between check-in and check-out (not inclusive)
+    return (
+      isAfter(dayStart, checkInDay) && 
+      isBefore(dayStart, checkOutDay)
+    );
   };
 
   // Generate day element with appropriate styling
@@ -194,11 +184,12 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
         };
       }
     } else if (isInRange) {
-      // Dates in the range use a uniform background color
+      // Dates in the range use a uniform background color with improved contrast
+      dayClass += " bg-primary/20";
       dayStyles = {
         ...dayStyles,
-        backgroundColor: "var(--primary-light, #edf2f7)",
-        background: "var(--primary-light, #edf2f7)"
+        backgroundColor: "rgba(var(--primary), 0.2)",
+        background: "rgba(var(--primary), 0.2)"
       };
     }
     
