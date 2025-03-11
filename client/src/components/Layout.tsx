@@ -147,8 +147,8 @@ export default function Layout({ children }: LayoutProps) {
             </div>
           </div>
           
-          <div className="mt-6 pt-4 border-t border-white/20 text-center text-sm opacity-70">
-            {footerData?.copyright && <p>{footerData.copyright}</p>}
+          <div className="mt-6 pt-4 border-t border-white/20 text-sm opacity-70">
+            {footerData?.copyright && <p className="text-center">{footerData.copyright}</p>}
           </div>
         </div>
       </footer>
