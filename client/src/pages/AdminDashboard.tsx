@@ -432,16 +432,25 @@ export default function AdminDashboard() {
           <DialogHeader>
             <DialogTitle>Redigera Sektion: {editingSection?.title}</DialogTitle>
             <DialogDescription>
-              Gör ändringar i innehållet för denna sektion.
+              {editingSection?.slug === 'footer' 
+                ? 'Redigera information som visas i sidfoten på alla sidor.'
+                : 'Gör ändringar i innehållet för denna sektion.'}
             </DialogDescription>
           </DialogHeader>
           
           {editingSection && (
-            <SectionEditor 
-              section={editingSection} 
-              onCancel={() => setOpenDialog(false)}
-              isGuestApartment={editingSection.slug === 'gastlagenhet'}
-            />
+            editingSection.slug === 'footer' ? (
+              <FooterEditor 
+                section={editingSection} 
+                onCancel={() => setOpenDialog(false)}
+              />
+            ) : (
+              <SectionEditor 
+                section={editingSection} 
+                onCancel={() => setOpenDialog(false)}
+                isGuestApartment={editingSection.slug === 'gastlagenhet'}
+              />
+            )
           )}
         </DialogContent>
       </Dialog>
