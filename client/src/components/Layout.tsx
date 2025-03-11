@@ -92,7 +92,12 @@ export default function Layout({ children }: LayoutProps) {
       <header className="bg-primary text-white shadow-md">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center">
-            <button id="menu-toggle" className="mr-4 md:hidden" onClick={toggleSidebar}>
+            <button 
+              id="menu-toggle" 
+              className="mr-4 md:hidden mobile-touch-target flex items-center justify-center" 
+              onClick={toggleSidebar}
+              aria-label="Öppna meny"
+            >
               <i className="fas fa-bars text-xl"></i>
             </button>
             <Link href="/">
