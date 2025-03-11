@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import FileUploader from "@/components/FileUploader";
 import DocumentList from "@/components/DocumentList";
+import MonthBookings from "@/components/MonthBookings";
 
 export default function GuestApartment() {
   const [isEditing, setIsEditing] = useState(false);
@@ -135,6 +136,9 @@ export default function GuestApartment() {
             
             {/* Booking form component */}
             <BookingForm />
+            
+            {/* Monthly bookings display */}
+            <MonthBookings />
           </CardContent>
         </Card>
       )}
