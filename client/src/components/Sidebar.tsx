@@ -26,9 +26,9 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
   return (
     <aside 
       id="sidebar" 
-      className={`w-64 bg-white border-r shadow-md fixed h-full left-0 top-0 transform ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      } md:translate-x-0 transition-transform duration-300 z-30 overflow-y-auto pt-14 md:pt-16`}
+      className={`w-64 fixed h-full left-0 top-0 transform bg-white border-r shadow-md
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0 transition-transform duration-300 z-30 overflow-y-auto pt-14 md:pt-16`}
     >
       {/* Overlay för att stänga sidofältet på mobil när användaren trycker utanför */}
       {isOpen && (
@@ -38,7 +38,7 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
         />
       )}
       
-      <div className="p-3 md:p-4">
+      <div className="p-3 md:p-4 bg-white">
         <div className="mb-4 md:mb-6">
           <div className="md:hidden relative mb-4">
             {/* Mobile search */}

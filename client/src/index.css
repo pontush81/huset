@@ -24,6 +24,11 @@
     -webkit-tap-highlight-color: transparent;
   }
   
+  /* Fixa problem med menyn i mobilt läge */
+  #sidebar {
+    background-color: white !important;
+  }
+  
   /* Bättre anpassning för iPhone och andra mobiltelefoner */
   @media (max-width: 640px) {
     input, select, textarea, button {
