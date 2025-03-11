@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Section } from "@shared/schema";
 import SearchBar from "./SearchBar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -89,6 +90,40 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
               )}
             </ul>
           </nav>
+          
+          {/* Administratörssektionen */}
+          <div className="mt-8">
+            <Separator className="my-4" />
+            <h2 className="font-semibold text-lg mb-2">Administration</h2>
+            <nav>
+              <ul>
+                <li className="mb-1">
+                  <Link href="/admin/dashboard" 
+                    className={`block py-2 px-3 rounded ${
+                      location.includes("/admin/dashboard") 
+                        ? 'bg-secondary font-medium' 
+                        : 'hover:bg-secondary'
+                    } transition-colors duration-200 nav-link`}
+                  >
+                    <i className="fas fa-gauge mr-2 text-primary"></i>
+                    Admin Dashboard
+                  </Link>
+                </li>
+                <li className="mb-1">
+                  <Link href="/admin/bokningar" 
+                    className={`block py-2 px-3 rounded ${
+                      location.includes("/admin/bokningar") 
+                        ? 'bg-secondary font-medium' 
+                        : 'hover:bg-secondary'
+                    } transition-colors duration-200 nav-link`}
+                  >
+                    <i className="fas fa-calendar-alt mr-2 text-primary"></i>
+                    Bokningar
+                  </Link>
+                </li>
+              </ul>
+            </nav>
+          </div>
         </div>
       </div>
     </aside>
