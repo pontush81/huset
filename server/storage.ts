@@ -4,6 +4,22 @@ import {
   bookings, type Booking, type InsertBooking,
   sections, type Section, type InsertSection
 } from "@shared/schema";
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { format } from 'date-fns';
+
+// Get the directory name in ES modules context
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Path for bookings file
+const BOOKINGS_FILE = path.join(__dirname, '../data/bookings.json');
+
+// Ensure data directory exists
+if (!fs.existsSync(path.join(__dirname, '../data'))) {
+  fs.mkdirSync(path.join(__dirname, '../data'), { recursive: true });
+}
 
 // Storage interface for all operations
 export interface IStorage {
@@ -25,6 +41,7 @@ export interface IStorage {
   createBooking(booking: InsertBooking): Promise<Booking>;
   updateBookingStatus(id: number, status: string): Promise<Booking | undefined>;
   getBookingsForDateRange(startDate: Date, endDate: Date): Promise<Booking[]>;
+  exportBookings(): Promise<string>; // Added method for exporting bookings
   
   // Section operations
   getSections(): Promise<Section[]>;
@@ -58,6 +75,46 @@ export class MemStorage implements IStorage {
     
     // Initialize with default handbook sections
     this.initializeDefaultSections();
+    
+    // Load bookings from file if it exists
+    this.loadBookingsFromFile();
+  }
+  
+  // Load bookings from file
+  private loadBookingsFromFile(): void {
+    try {
+      if (fs.existsSync(BOOKINGS_FILE)) {
+        const bookingsData = fs.readFileSync(BOOKINGS_FILE, 'utf8');
+        const bookingsArray: Booking[] = JSON.parse(bookingsData);
+        
+        // Find highest booking ID to ensure new IDs don't clash
+        let maxId = 0;
+        
+        bookingsArray.forEach(booking => {
+          this.bookings.set(booking.id, booking);
+          maxId = Math.max(maxId, booking.id);
+        });
+        
+        // Update the booking ID counter
+        if (maxId > 0) {
+          this.bookingCurrentId = maxId + 1;
+        }
+        
+        console.log(`Loaded ${bookingsArray.length} bookings from file.`);
+      }
+    } catch (error) {
+      console.error('Error loading bookings from file:', error);
+    }
+  }
+  
+  // Save bookings to file
+  private saveBookingsToFile(): void {
+    try {
+      const bookingsArray = Array.from(this.bookings.values());
+      fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookingsArray, null, 2), 'utf8');
+    } catch (error) {
+      console.error('Error saving bookings to file:', error);
+    }
   }
 
   // Initialize default sections for the handbook
