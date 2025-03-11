@@ -295,7 +295,6 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
             id="show-weeks"
             checked={showWeekNumbers}
             onCheckedChange={setShowWeekNumbers}
-            className="data-[state=checked]:bg-primary"
           />
         </div>
       </div>
