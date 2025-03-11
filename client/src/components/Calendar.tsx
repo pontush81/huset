@@ -21,6 +21,8 @@ import { sv } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CalendarProps {
   onDateSelect?: (date: Date) => void;
@@ -36,6 +38,7 @@ interface BookingDate {
 
 export default function Calendar({ onDateSelect, selectedDates }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showWeekNumbers, setShowWeekNumbers] = useState<boolean>(true);
   
   // Calculate calendar range (current month + some days from previous/next month)
   const monthStart = startOfMonth(currentMonth);
@@ -43,7 +46,8 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
   
   // Create calendar day array, organized by weeks
   const firstDayOfMonth = startOfMonth(currentMonth);
-  const firstDayOfCalendar = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 }); // Start on Monday
+  // Start on Monday (1)
+  const firstDayOfCalendar = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 });
   
   // Generate 42 days (6 weeks) to ensure we have full weeks visible
   const calendarDays = Array.from({ length: 42 }, (_, i) => addDays(firstDayOfCalendar, i));
@@ -100,7 +104,7 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
     const isInRange = isInSelectedRange(day);
     
     // Style classes based on state
-    let dayClass = "p-2 relative flex items-center justify-center";
+    let dayClass = "w-full h-full p-2 flex items-center justify-center";
     
     if (!isCurrentMonth) {
       dayClass += " text-gray-400";
@@ -113,14 +117,13 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
     if (isBooked) {
       dayClass += " bg-red-100";
     } else if (isSelected) {
-      dayClass += " bg-accent/60 text-white rounded-full";
+      dayClass += " bg-accent/60 text-white";
     } else if (isInRange) {
       dayClass += " bg-accent/20";
     }
     
     return (
       <button 
-        key={day.toString()}
         className={dayClass}
         onClick={() => onDateSelect && !isBooked && onDateSelect(day)}
         disabled={isBooked || isBefore(day, new Date())}
@@ -155,64 +158,85 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
 
   return (
     <Card className="bg-white border rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={prevMonth}
-          className="text-primary hover:text-primary/80"
-        >
-          <i className="fas fa-chevron-left"></i>
-        </Button>
-        <h4 className="font-medium text-lg">
-          {format(currentMonth, "MMMM yyyy", { locale: sv })}
-        </h4>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={nextMonth}
-          className="text-primary hover:text-primary/80"
-        >
-          <i className="fas fa-chevron-right"></i>
-        </Button>
+      <div className="flex flex-col sm:flex-row items-center border-b">
+        <div className="flex items-center justify-between p-4 w-full">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={prevMonth}
+            className="text-primary hover:text-primary/80"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h4 className="font-medium text-lg">
+            {format(currentMonth, "MMMM yyyy", { locale: sv })}
+          </h4>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={nextMonth}
+            className="text-primary hover:text-primary/80"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <div className="flex items-center gap-2 px-4 pb-4 sm:pb-0 sm:pr-4 sm:border-l">
+          <label htmlFor="show-weeks" className="text-sm">
+            Visa veckonummer
+          </label>
+          <Switch 
+            id="show-weeks"
+            checked={showWeekNumbers}
+            onCheckedChange={setShowWeekNumbers}
+          />
+        </div>
       </div>
       
-      <div className="grid grid-cols-8 text-center">
+      <div className={`grid ${showWeekNumbers ? 'grid-cols-8' : 'grid-cols-7'} text-center`}>
         {/* Weekday headers */}
-        {weekDays.map((day) => (
+        {weekDays.filter((_, i) => showWeekNumbers || i > 0).map((day) => (
           <div key={day} className="p-2 border-b text-sm font-medium">
             {day}
           </div>
         ))}
         
-        {/* Calendar days */}
+        {/* Calendar days with week numbers */}
         {isLoading ? (
           // Skeleton loading state for days
-          Array(42).fill(0).map((_, i) => (
+          Array(showWeekNumbers ? 48 : 42).fill(0).map((_, i) => (
             <div key={i} className="p-2 border-b border-r">
               <Skeleton className="h-6 w-6 rounded-full mx-auto" />
             </div>
           ))
         ) : (
-          // Generate the calendar grid with days by week
-          weeks.map((week, weekIndex) => 
-            // Använd den tomma fragment-syntaxen <> ... </> istället för Fragment-komponent
-            <>
-              {/* Week number cell */}
-              <div key={`week-${weekIndex}`} className="p-2 border-r border-b flex items-center justify-center bg-gray-50">
-                <span className="text-xs font-medium text-gray-500">
-                  {getWeek(week[0], { weekStartsOn: 1 })}
-                </span>
-              </div>
-              
-              {/* Days in this week */}
-              {week.map((day, dayIndex) => (
-                <div key={`${weekIndex}-${dayIndex}`} className="border-b border-r">
+          // Render all weeks and days
+          weeks.flatMap((week, weekIndex) => {
+            // Create week row array
+            const weekRow = [];
+            
+            // Add week number cell
+            if (showWeekNumbers) {
+              weekRow.push(
+                <div key={`week-${weekIndex}`} className="p-2 border-r border-b flex items-center justify-center bg-gray-50">
+                  <span className="text-xs font-medium text-gray-500">
+                    {getWeek(week[0], { weekStartsOn: 1 })}
+                  </span>
+                </div>
+              );
+            }
+            
+            // Add day cells
+            week.forEach((day, dayIndex) => {
+              weekRow.push(
+                <div key={`day-${weekIndex}-${dayIndex}`} className="border-b border-r">
                   {renderDay(day)}
                 </div>
-              ))}
-            </>
-          )
+              );
+            });
+            
+            return weekRow;
+          })
         )}
       </div>
     </Card>
