@@ -55,7 +55,7 @@ export default function BookingForm() {
       checkInDate: format(new Date(), 'yyyy-MM-dd'),
       checkOutDate: format(new Date(), 'yyyy-MM-dd'),
       guestCount: 1,
-      message: "",
+      message: "", // Always initialize with empty string, never null
       terms: false,
     },
   });
@@ -66,8 +66,8 @@ export default function BookingForm() {
       apiRequest("POST", "/api/bookings", data),
     onSuccess: () => {
       toast({
-        title: "Bokningsförfrågan skickad",
-        description: "Vi kommer att kontakta dig inom kort för att bekräfta bokningen.",
+        title: "Bokning bekräftad",
+        description: "Din bokning har bekräftats. Du kommer att få en bekräftelse via e-post.",
       });
       // Reset form and selected dates
       form.reset();
@@ -292,7 +292,11 @@ export default function BookingForm() {
                 <FormItem className="md:col-span-2">
                   <FormLabel>Meddelande (valfritt)</FormLabel>
                   <FormControl>
-                    <Textarea rows={3} {...field} />
+                    <Textarea 
+                      rows={3} 
+                      {...field} 
+                      value={field.value || ''} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -327,7 +331,7 @@ export default function BookingForm() {
               className="bg-primary hover:bg-primary/90 text-white px-6 py-3"
               disabled={bookingMutation.isPending}
             >
-              {bookingMutation.isPending ? "Skickar..." : "Skicka bokningsförfrågan"}
+              {bookingMutation.isPending ? "Bearbetar..." : "Boka lägenheten"}
             </Button>
           </div>
         </form>

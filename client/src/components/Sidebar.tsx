@@ -51,25 +51,42 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                 ))
               ) : (
                 // Navigation links
-                sections?.map((section) => (
-                  <li key={section.id} className="mb-1">
-                    <a 
-                      href={`#${section.slug}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleNavClick(section.slug);
-                      }}
-                      className={`block py-2 px-3 rounded ${
-                        currentSection === section.slug 
-                          ? 'bg-secondary font-medium' 
-                          : 'hover:bg-secondary'
-                      } transition-colors duration-200 nav-link`}
-                    >
-                      <i className={`fas ${section.icon} mr-2 text-primary`}></i>
-                      {section.title}
-                    </a>
-                  </li>
-                ))
+                <>
+                  {sections?.map((section) => (
+                    <li key={section.id} className="mb-1">
+                      <a 
+                        href={`#${section.slug}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleNavClick(section.slug);
+                        }}
+                        className={`block py-2 px-3 rounded ${
+                          currentSection === section.slug 
+                            ? 'bg-secondary font-medium' 
+                            : 'hover:bg-secondary'
+                        } transition-colors duration-200 nav-link`}
+                      >
+                        <i className={`fas ${section.icon} mr-2 text-primary`}></i>
+                        {section.title}
+                      </a>
+                    </li>
+                  ))}
+                  <div className="border-t border-gray-200 my-4 pt-2">
+                    <h3 className="font-semibold text-sm ml-3 text-gray-500 uppercase tracking-wider mb-2">Administration</h3>
+                    <li className="mb-1">
+                      <Link href="/admin/bokningar" 
+                        className={`block py-2 px-3 rounded ${
+                          currentSection === "admin/bokningar" 
+                            ? 'bg-secondary font-medium' 
+                            : 'hover:bg-secondary'
+                        } transition-colors duration-200 nav-link`}
+                      >
+                        <i className="fas fa-calendar-check mr-2 text-primary"></i>
+                        Hantera bokningar
+                      </Link>
+                    </li>
+                  </div>
+                </>
               )}
             </ul>
           </nav>
