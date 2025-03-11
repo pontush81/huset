@@ -125,7 +125,7 @@ export default function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Footer */}
-      <footer className="bg-primary text-white py-6 mt-auto">
+      <footer className="bg-primary text-white py-6 mt-auto w-full">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
@@ -146,11 +146,14 @@ export default function Layout({ children }: LayoutProps) {
               )}
             </div>
           </div>
-          
-          <div className="mt-6 pt-4 border-t border-white/20 text-sm opacity-70">
-            {footerData?.copyright && <p className="text-center">{footerData.copyright}</p>}
-          </div>
         </div>
+        
+        {/* Copyright section - full width and separated from the layout */}
+        {footerData?.copyright && (
+          <div className="w-full mt-6 pt-4 border-t border-white/20 text-sm opacity-70">
+            <div className="text-center mx-auto">{footerData.copyright}</div>
+          </div>
+        )}
       </footer>
     </div>
   );
