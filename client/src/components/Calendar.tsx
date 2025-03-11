@@ -1,6 +1,22 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO, isBefore, isAfter, isSameDay } from "date-fns";
+import { 
+  format, 
+  addMonths, 
+  subMonths, 
+  startOfMonth, 
+  endOfMonth, 
+  eachDayOfInterval, 
+  isSameMonth, 
+  isToday, 
+  parseISO, 
+  isBefore, 
+  isAfter, 
+  isSameDay,
+  getWeek,
+  startOfWeek,
+  addDays
+} from "date-fns";
 import { sv } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +40,13 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
   // Calculate calendar range (current month + some days from previous/next month)
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
-  const calendarDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  
+  // Create calendar day array, organized by weeks
+  const firstDayOfMonth = startOfMonth(currentMonth);
+  const firstDayOfCalendar = startOfWeek(firstDayOfMonth, { weekStartsOn: 1 }); // Start on Monday
+  
+  // Generate 42 days (6 weeks) to ensure we have full weeks visible
+  const calendarDays = Array.from({ length: 42 }, (_, i) => addDays(firstDayOfCalendar, i));
   
   // Get bookings for availability check
   const { data: bookings, isLoading } = useQuery<BookingDate[]>({
@@ -119,7 +141,17 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
   };
 
   // Week day headers
-  const weekDays = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
+  const weekDays = ["Vecka", "Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
+
+  // Group days by weeks for rendering
+  const weeks = calendarDays.reduce((acc, day, i) => {
+    const weekIndex = Math.floor(i / 7);
+    if (!acc[weekIndex]) {
+      acc[weekIndex] = [];
+    }
+    acc[weekIndex].push(day);
+    return acc;
+  }, [] as Date[][]);
 
   return (
     <Card className="bg-white border rounded-lg overflow-hidden">
@@ -145,7 +177,7 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
         </Button>
       </div>
       
-      <div className="grid grid-cols-7 text-center">
+      <div className="grid grid-cols-8 text-center">
         {/* Weekday headers */}
         {weekDays.map((day) => (
           <div key={day} className="p-2 border-b text-sm font-medium">
@@ -156,14 +188,31 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
         {/* Calendar days */}
         {isLoading ? (
           // Skeleton loading state for days
-          Array(35).fill(0).map((_, i) => (
+          Array(42).fill(0).map((_, i) => (
             <div key={i} className="p-2 border-b border-r">
               <Skeleton className="h-6 w-6 rounded-full mx-auto" />
             </div>
           ))
         ) : (
-          // Generate the calendar grid with days
-          calendarDays.map(day => renderDay(day))
+          // Generate the calendar grid with days by week
+          weeks.map((week, weekIndex) => 
+            // Använd den tomma fragment-syntaxen <> ... </> istället för Fragment-komponent
+            <>
+              {/* Week number cell */}
+              <div key={`week-${weekIndex}`} className="p-2 border-r border-b flex items-center justify-center bg-gray-50">
+                <span className="text-xs font-medium text-gray-500">
+                  {getWeek(week[0], { weekStartsOn: 1 })}
+                </span>
+              </div>
+              
+              {/* Days in this week */}
+              {week.map((day, dayIndex) => (
+                <div key={`${weekIndex}-${dayIndex}`} className="border-b border-r">
+                  {renderDay(day)}
+                </div>
+              ))}
+            </>
+          )
         )}
       </div>
     </Card>

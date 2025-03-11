@@ -34,7 +34,7 @@
     "checkOutDate": "2025-03-16",
     "guestCount": 1,
     "message": null,
-    "status": "confirmed",
+    "status": "cancelled",
     "id": 3,
     "createdAt": "2025-03-11T10:55:03.148Z"
   },
@@ -50,5 +50,18 @@
     "status": "cancelled",
     "id": 4,
     "createdAt": "2025-03-11T10:56:24.058Z"
+  },
+  {
+    "name": "Pontus Hörberg",
+    "apartmentNumber": "",
+    "email": "pontus.hberg@gmail.com",
+    "phone": "0702887147",
+    "checkInDate": "2025-03-15",
+    "checkOutDate": "2025-03-21",
+    "guestCount": 1,
+    "message": null,
+    "status": "confirmed",
+    "id": 5,
+    "createdAt": "2025-03-11T11:52:47.477Z"
   }
 ]
