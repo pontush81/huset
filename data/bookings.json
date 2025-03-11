@@ -1,0 +1,15 @@
+[
+  {
+    "name": "Pontus Hörberg",
+    "apartmentNumber": "",
+    "email": "pontus.hberg@gmail.com",
+    "phone": "0702887147",
+    "checkInDate": "2025-03-15",
+    "checkOutDate": "2025-03-16",
+    "guestCount": 1,
+    "message": null,
+    "id": 1,
+    "status": "pending",
+    "createdAt": "2025-03-11T10:46:57.127Z"
+  }
+]

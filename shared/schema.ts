@@ -53,7 +53,6 @@ export const bookings = pgTable("bookings", {
 
 export const insertBookingSchema = createInsertSchema(bookings).omit({
   id: true,
-  status: true,
   createdAt: true,
 });
 

@@ -247,11 +247,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Handle the date conversion correctly for storage
+      // Create a booking with confirmed status automatically
       const booking = await storage.createBooking({
         ...parsedData.data,
         // Keep original string format for the storage layer
         checkInDate: parsedData.data.checkInDate,
-        checkOutDate: parsedData.data.checkOutDate
+        checkOutDate: parsedData.data.checkOutDate,
+        status: 'confirmed' // Set status to confirmed automatically
       });
       
       res.status(201).json(booking);
