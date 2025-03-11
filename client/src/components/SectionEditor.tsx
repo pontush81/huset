@@ -157,10 +157,21 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
         <h2 className="text-xl font-semibold mb-4">Redigera sektion</h2>
         
         <Tabs defaultValue="content" className="mb-4">
-          <TabsList className="w-full flex overflow-x-auto md:w-auto">
-            <TabsTrigger value="content" className="mobile-touch-target">Innehåll</TabsTrigger>
-            <TabsTrigger value="metadata" className="mobile-touch-target">Sektionsinfo</TabsTrigger>
-            {isGuestApartment && <TabsTrigger value="info" className="mobile-touch-target">Informationsruta</TabsTrigger>}
+          <TabsList className="w-full flex overflow-x-auto md:w-auto space-x-1">
+            <TabsTrigger value="content" className="mobile-touch-target flex-1 text-center">
+              <i className="fas fa-file-alt mr-2 hidden sm:inline"></i>
+              <span>Innehåll</span>
+            </TabsTrigger>
+            <TabsTrigger value="metadata" className="mobile-touch-target flex-1 text-center">
+              <i className="fas fa-cog mr-2 hidden sm:inline"></i>
+              <span>Sektionsinfo</span>
+            </TabsTrigger>
+            {isGuestApartment && (
+              <TabsTrigger value="info" className="mobile-touch-target flex-1 text-center">
+                <i className="fas fa-info-circle mr-2 hidden sm:inline"></i>
+                <span>Informationsruta</span>
+              </TabsTrigger>
+            )}
           </TabsList>
           
           {/* Content Tab */}
@@ -282,7 +293,7 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
         <div className="flex flex-col sm:flex-row gap-3 sm:space-x-3">
           <Button 
             onClick={handleSave}
-            className="bg-primary hover:bg-primary/90 text-white mobile-touch-target"
+            className="bg-primary hover:bg-primary/90 text-white mobile-touch-target order-1 sm:order-1 w-full sm:w-auto"
             disabled={updateMutation.isPending}
           >
             {updateMutation.isPending ? (
@@ -302,7 +313,7 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
             variant="outline"
             onClick={onCancel}
             disabled={updateMutation.isPending}
-            className="mobile-touch-target"
+            className="mobile-touch-target order-2 sm:order-2 w-full sm:w-auto"
           >
             <i className="fas fa-times mr-2"></i>
             <span>Avbryt</span>
