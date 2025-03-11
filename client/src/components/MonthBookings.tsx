@@ -12,8 +12,13 @@ interface BookingDate {
   status: string;
 }
 
-export default function MonthBookings() {
-  const currentMonth = new Date();
+interface MonthBookingsProps {
+  currentMonth?: Date;
+}
+
+export default function MonthBookings({ currentMonth: propMonth }: MonthBookingsProps) {
+  // Use prop month if provided, otherwise use current date
+  const currentMonth = propMonth || new Date();
   
   // Fetch bookings for current month
   const { data: bookings, isLoading } = useQuery<BookingDate[]>({
@@ -57,7 +62,9 @@ export default function MonthBookings() {
   return (
     <Card className="mt-6">
       <CardHeader>
-        <CardTitle className="text-xl">Bokningar denna månad</CardTitle>
+        <CardTitle className="text-xl">
+          Bokningar {format(currentMonth, 'MMMM yyyy', { locale: sv })}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {confirmedBookings.length === 0 ? (

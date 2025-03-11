@@ -9,11 +9,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import FileUploader from "@/components/FileUploader";
 import DocumentList from "@/components/DocumentList";
 import MonthBookings from "@/components/MonthBookings";
+import Calendar from "@/components/Calendar";
 
 export default function GuestApartment() {
   const [isEditing, setIsEditing] = useState(false);
   const [infoItems, setInfoItems] = useState<string[]>([]);
   const [mainContent, setMainContent] = useState("");
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   
   // Fetch guest apartment section content
   const { data: section, isLoading } = useQuery<Section>({
@@ -134,11 +136,25 @@ export default function GuestApartment() {
               <DocumentList category="gastlagenhet" limit={5} />
             </div>
             
+            {/* Calendar for selecting dates and checking availability */}
+            <div className="my-6">
+              <h3 className="text-xl font-semibold mb-4">Kalender och tillgänglighet</h3>
+              <Calendar 
+                currentMonth={currentMonth}
+                onMonthChange={(month) => setCurrentMonth(month)}
+              />
+            </div>
+            
             {/* Booking form component */}
-            <BookingForm />
+            <div className="mt-6">
+              <h3 className="text-xl font-semibold mb-4">Boka gästlägenheten</h3>
+              <BookingForm />
+            </div>
             
             {/* Monthly bookings display */}
-            <MonthBookings />
+            <MonthBookings 
+              currentMonth={currentMonth}
+            />
           </CardContent>
         </Card>
       )}

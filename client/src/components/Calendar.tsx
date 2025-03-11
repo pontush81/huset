@@ -249,12 +249,22 @@ export default function Calendar({ onDateSelect, selectedDates, currentMonth: pr
 
   // Previous month button
   const prevMonth = () => {
-    setCurrentMonth(subMonths(currentMonth, 1));
+    const newMonth = subMonths(currentMonth, 1);
+    if (onMonthChange) {
+      onMonthChange(newMonth);
+    } else {
+      setLocalMonth(newMonth);
+    }
   };
 
   // Next month button
   const nextMonth = () => {
-    setCurrentMonth(addMonths(currentMonth, 1));
+    const newMonth = addMonths(currentMonth, 1);
+    if (onMonthChange) {
+      onMonthChange(newMonth);
+    } else {
+      setLocalMonth(newMonth);
+    }
   };
 
   // Week day headers
