@@ -113,6 +113,52 @@ export default function AdminDashboard() {
     }
   });
   
+  // Delete section mutation
+  const deleteSectionMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest("DELETE", `/api/sections/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sections'] });
+      toast({
+        title: "Sektion raderad",
+        description: "Sektionen har raderats framgångsrikt",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Error deleting section:", error);
+      let errorMessage = "Det gick inte att radera sektionen";
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      toast({
+        title: "Fel vid radering",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Handle section deletion
+  const handleDeleteSection = async (section: Section) => {
+    // Kontrollera om det är en väsentlig sektion som inte får raderas
+    const essentialSlugs = ['gastlagenhet', 'ellagarden', 'styrelse'];
+    if (essentialSlugs.includes(section.slug)) {
+      toast({
+        title: "Kan inte radera",
+        description: "Denna sektion är väsentlig för handboken och kan inte raderas",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (confirm(`Är du säker på att du vill radera sektionen "${section.title}"?\nDenna åtgärd kan inte ångras.`)) {
+      deleteSectionMutation.mutate(section.id);
+    }
+  };
+  
   // Handle slug generation from title
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const title = e.target.value;
@@ -237,17 +283,31 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setEditingSection(section);
-                          setOpenDialog(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Redigera
-                      </Button>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingSection(section);
+                            setOpenDialog(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Redigera
+                        </Button>
+                        {/* Visa inte Ta bort-knappen för väsentliga sektioner */}
+                        {!['gastlagenhet', 'ellagarden', 'styrelse'].includes(section.slug) && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteSection(section)}
+                            disabled={deleteSectionMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {deleteSectionMutation.isPending ? 'Raderar...' : 'Radera'}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
