@@ -130,6 +130,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Delete a section
+  app.delete("/api/sections/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const sectionId = parseInt(id);
+      
+      if (isNaN(sectionId)) {
+        return res.status(400).json({ error: "Invalid section ID" });
+      }
+      
+      // Verify the section exists
+      const section = await storage.getSectionById(sectionId);
+      if (!section) {
+        return res.status(404).json({ error: "Section not found" });
+      }
+      
+      // Prevent deletion of essential sections
+      const essentialSlugs = ['gastlagenhet', 'ellagarden', 'styrelse'];
+      if (essentialSlugs.includes(section.slug)) {
+        return res.status(403).json({ 
+          error: "Cannot delete essential section",
+          message: "Denna sektion är väsentlig för handboken och kan inte raderas"
+        });
+      }
+      
+      const success = await storage.deleteSection(sectionId);
+      
+      if (success) {
+        res.status(200).json({ message: "Section deleted successfully" });
+      } else {
+        res.status(500).json({ error: "Failed to delete section" });
+      }
+    } catch (error) {
+      console.error("Error deleting section:", error);
+      res.status(500).json({ error: "Failed to delete section" });
+    }
+  });
+  
   // Get all documents
   app.get("/api/documents", async (req: Request, res: Response) => {
     try {

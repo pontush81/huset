@@ -46,6 +46,7 @@ export interface IStorage {
   // Section operations
   getSections(): Promise<Section[]>;
   getSectionBySlug(slug: string): Promise<Section | undefined>;
+  getSectionById(id: number): Promise<Section | undefined>;
   createSection(section: InsertSection): Promise<Section>;
   updateSection(id: number, content: string): Promise<Section | undefined>;
   updateSectionData(id: number, data: {
@@ -54,6 +55,7 @@ export interface IStorage {
     slug?: string;
     icon?: string;
   }): Promise<Section | undefined>;
+  deleteSection(id: number): Promise<boolean>;
 }
 
 // In-memory implementation of the storage interface
@@ -337,6 +339,10 @@ export class MemStorage implements IStorage {
       section => section.slug === slug
     );
   }
+  
+  async getSectionById(id: number): Promise<Section | undefined> {
+    return this.sections.get(id);
+  }
 
   async createSection(insertSection: InsertSection): Promise<Section> {
     const id = this.sectionCurrentId++;
@@ -388,6 +394,10 @@ export class MemStorage implements IStorage {
     
     this.sections.set(id, updatedSection);
     return updatedSection;
+  }
+  
+  async deleteSection(id: number): Promise<boolean> {
+    return this.sections.delete(id);
   }
 }
 

@@ -86,7 +86,7 @@
     "checkOutDate": "2025-03-23",
     "guestCount": 1,
     "message": null,
-    "status": "confirmed",
+    "status": "cancelled",
     "id": 7,
     "createdAt": "2025-03-11T12:02:46.656Z"
   }
