@@ -24,6 +24,7 @@ export default function BookingManager() {
   const [showCancelDialog, setShowCancelDialog] = useState<boolean>(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<string>("all"); // Nytt tillstånd för filtrering
 
   // Fetch all bookings
   const { data: bookings, isLoading } = useQuery<Booking[]>({
@@ -99,6 +100,8 @@ export default function BookingManager() {
 
   // Handle booking cancellation
   const handleCancelBooking = (bookingId: number) => {
+    // Hitta bokningen för att visa relevant dialog
+    const booking = bookings?.find(b => b.id === bookingId);
     setSelectedBookingId(bookingId);
     setShowCancelDialog(true);
   };
@@ -189,8 +192,8 @@ export default function BookingManager() {
           </div>
         )}
         
-        {booking.status === 'pending' && (
-          <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex gap-2">
+          {booking.status === 'pending' && (
             <Button 
               variant="outline" 
               size="sm"
@@ -199,24 +202,53 @@ export default function BookingManager() {
             >
               Bekräfta
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="text-red-500 border-red-500 hover:bg-red-50"
-              onClick={() => handleCancelBooking(booking.id)}
-            >
-              Avboka
-            </Button>
-          </div>
-        )}
+          )}
+          
+          {/* Visa avbokningsknapp för alla bokningsstatus */}
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="text-red-500 border-red-500 hover:bg-red-50"
+            onClick={() => handleCancelBooking(booking.id)}
+          >
+            Avboka
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-xl font-semibold">Hantera bokningar</h3>
+      <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
+        <div>
+          <h3 className="text-xl font-semibold mb-2">Hantera bokningar</h3>
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              variant={filter === 'all' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setFilter('all')}
+            >
+              Alla ({bookings?.length || 0})
+            </Button>
+            <Button 
+              variant={filter === 'confirmed' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setFilter('confirmed')}
+              className={filter === 'confirmed' ? 'bg-green-500 hover:bg-green-600' : 'text-green-500'}
+            >
+              Bekräftade ({confirmedBookings.length})
+            </Button>
+            <Button 
+              variant={filter === 'cancelled' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setFilter('cancelled')}
+              className={filter === 'cancelled' ? 'bg-red-500 hover:bg-red-600' : 'text-red-500'}
+            >
+              Avbokade ({cancelledBookings.length})
+            </Button>
+          </div>
+        </div>
         
         <Button 
           onClick={handleExport}
@@ -235,7 +267,12 @@ export default function BookingManager() {
         </div>
       ) : (
         <div className="space-y-4">
-          {bookings?.map(renderBookingCard)}
+          {bookings
+            ?.filter(booking => {
+              if (filter === 'all') return true;
+              return booking.status === filter;
+            })
+            .map(renderBookingCard)}
         </div>
       )}
       
@@ -245,7 +282,9 @@ export default function BookingManager() {
           <AlertDialogHeader>
             <AlertDialogTitle>Bekräfta avbokning</AlertDialogTitle>
             <AlertDialogDescription>
-              Är du säker på att du vill avboka denna bokning? Denna åtgärd kan inte ångras.
+              {selectedBookingId && bookings?.find(b => b.id === selectedBookingId)?.status === 'confirmed' 
+                ? 'Är du säker på att du vill avboka denna bekräftade bokning? Detta kan påverka gästen och bör endast göras vid särskilda omständigheter.'
+                : 'Är du säker på att du vill avboka denna bokning? Denna åtgärd kan inte ångras.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
