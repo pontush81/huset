@@ -124,7 +124,7 @@ export default function DocumentList({ category, limit }: DocumentListProps) {
                     <p className="text-sm text-gray-500">{doc.description}</p>
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">
                   {format(new Date(doc.uploadedAt), "d MMM yyyy", { locale: sv })}
                 </TableCell>
                 <TableCell className="text-right space-x-4">

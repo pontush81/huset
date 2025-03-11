@@ -19,6 +19,11 @@
     -moz-osx-font-smoothing: grayscale;
   }
   
+  /* Fixa tap-highlights på Safari iOS */
+  a, button, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
   /* Bättre anpassning för iPhone och andra mobiltelefoner */
   @media (max-width: 640px) {
     input, select, textarea, button {
@@ -27,6 +32,15 @@
     
     img, table {
       @apply max-w-full;
+    }
+    
+    /* Förbättra knappar och länkar på mobil */
+    a, button, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
   }
 }

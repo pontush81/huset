@@ -130,10 +130,12 @@ export default function FileUploader({ category, autoOpen = false }: FileUploade
       <DialogTrigger asChild>
         <Button 
           variant="default" 
-          className="bg-primary hover:bg-primary/90 text-white"
+          className="bg-primary hover:bg-primary/90 text-white flex-shrink-0 ml-3 sm:ml-4 touch-manipulation"
         >
           <i className="fas fa-upload mr-2"></i>
-          Ladda upp dokument
+          <span className="inline-block sm:inline">
+            <span className="hidden sm:inline">Ladda upp </span>Dokument
+          </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
