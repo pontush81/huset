@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import SectionEditor from "@/components/SectionEditor";
+import FooterEditor from "@/components/FooterEditor";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import FileUploader from "@/components/FileUploader";
 import { Trash2, Edit, FileText, ExternalLink, Plus, FileUp, Calendar, LayoutDashboard } from "lucide-react";

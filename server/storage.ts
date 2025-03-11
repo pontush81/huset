@@ -181,6 +181,17 @@ export class MemStorage implements IStorage {
         slug: "styrelse",
         content: "Information om föreningens styrelse och kontaktuppgifter.",
         icon: "fa-users-cog"
+      },
+      {
+        title: "Sidfot",
+        slug: "footer",
+        content: JSON.stringify({
+          address: "Ellagårdsvägen 123",
+          email: "styrelsen@ellagarden.se",
+          phone: "08-123 45 67",
+          copyright: "BRF Ellagården. Alla rättigheter förbehållna."
+        }),
+        icon: "fa-shoe-prints"
       }
     ];
 

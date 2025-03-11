@@ -52,10 +52,28 @@ export default function Layout({ children }: LayoutProps) {
     }
   }, [location]);
 
-  // Fetch sections for breadcrumbs
+  // Fetch sections for breadcrumbs and footer
   const { data: sections } = useQuery<Section[]>({
     queryKey: ['/api/sections'],
   });
+  
+  // Fetch footer data specifically
+  const { data: footerSection } = useQuery<Section>({
+    queryKey: ['/api/sections/footer'],
+  });
+  
+  // Parse footer data
+  const footerData = (() => {
+    try {
+      if (footerSection?.content) {
+        return JSON.parse(footerSection.content);
+      }
+      return null;
+    } catch (e) {
+      console.error("Error parsing footer data:", e);
+      return null;
+    }
+  })();
 
   // Find current section title for breadcrumbs
   const currentSectionTitle = sections?.find(s => s.slug === currentSection)?.title || 
@@ -112,21 +130,21 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
               <h3 className="text-lg font-semibold mb-2">BRF Ellagården</h3>
-              <p className="text-sm opacity-80">Ellagårdsvägen 123, 123 45 Stockholm</p>
+              <p className="text-sm opacity-80">{footerData?.address || 'Ellagårdsvägen 123'}</p>
             </div>
             
             <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
-              <a href="mailto:styrelsen@ellagarden.se" className="text-sm opacity-80 hover:opacity-100">
-                <i className="fas fa-envelope mr-2"></i>styrelsen@ellagarden.se
+              <a href={`mailto:${footerData?.email || 'styrelsen@ellagarden.se'}`} className="text-sm opacity-80 hover:opacity-100">
+                <i className="fas fa-envelope mr-2"></i>{footerData?.email || 'styrelsen@ellagarden.se'}
               </a>
-              <a href="tel:+4681234567" className="text-sm opacity-80 hover:opacity-100">
-                <i className="fas fa-phone mr-2"></i>08-123 45 67
+              <a href={`tel:${footerData?.phone?.replace(/[^0-9+]/g, '') || '+4681234567'}`} className="text-sm opacity-80 hover:opacity-100">
+                <i className="fas fa-phone mr-2"></i>{footerData?.phone || '08-123 45 67'}
               </a>
             </div>
           </div>
           
           <div className="mt-6 pt-4 border-t border-white/20 text-center text-sm opacity-70">
-            <p>© {new Date().getFullYear()} BRF Ellagården. Alla rättigheter förbehållna.</p>
+            <p>© {new Date().getFullYear()} {footerData?.copyright || 'BRF Ellagården. Alla rättigheter förbehållna.'}</p>
           </div>
         </div>
       </footer>
