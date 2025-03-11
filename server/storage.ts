@@ -253,6 +253,10 @@ export class MemStorage implements IStorage {
       message: insertBooking.message || null
     };
     this.bookings.set(id, booking);
+    
+    // Save bookings to file after creating a new one
+    this.saveBookingsToFile();
+    
     return booking;
   }
 
@@ -262,7 +266,46 @@ export class MemStorage implements IStorage {
     
     const updatedBooking = { ...booking, status };
     this.bookings.set(id, updatedBooking);
+    
+    // Save bookings to file after updating status
+    this.saveBookingsToFile();
+    
     return updatedBooking;
+  }
+  
+  // Export bookings for backup and reporting
+  async exportBookings(): Promise<string> {
+    try {
+      const bookings = Array.from(this.bookings.values());
+      
+      // Format date for filename
+      const dateStr = format(new Date(), 'yyyy-MM-dd');
+      const filename = `bookings-export-${dateStr}.json`;
+      const exportPath = path.join(__dirname, '../data', filename);
+      
+      // Create a formatted version of the bookings with human-readable dates
+      const formattedBookings = bookings.map(booking => {
+        const checkIn = new Date(booking.checkInDate);
+        const checkOut = new Date(booking.checkOutDate);
+        const created = new Date(booking.createdAt);
+        
+        return {
+          ...booking,
+          checkInDate_formatted: format(checkIn, 'yyyy-MM-dd'),
+          checkOutDate_formatted: format(checkOut, 'yyyy-MM-dd'),
+          createdAt_formatted: format(created, 'yyyy-MM-dd HH:mm:ss'),
+          nights: Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))
+        };
+      });
+      
+      // Write the export file
+      fs.writeFileSync(exportPath, JSON.stringify(formattedBookings, null, 2), 'utf8');
+      
+      return filename;
+    } catch (error) {
+      console.error('Error exporting bookings:', error);
+      throw new Error('Failed to export bookings');
+    }
   }
 
   async getBookingsForDateRange(startDate: Date, endDate: Date): Promise<Booking[]> {

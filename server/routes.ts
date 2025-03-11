@@ -261,6 +261,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update booking status (confirm or cancel)
+  app.patch("/api/bookings/:id/status", async (req: Request, res: Response) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (isNaN(bookingId)) {
+        return res.status(400).json({ error: "Ogiltigt boknings-ID" });
+      }
+      
+      if (!status || (status !== 'pending' && status !== 'confirmed' && status !== 'cancelled')) {
+        return res.status(400).json({ error: "Ogiltig bokningsstatus" });
+      }
+      
+      const updatedBooking = await storage.updateBookingStatus(bookingId, status);
+      
+      if (!updatedBooking) {
+        return res.status(404).json({ error: "Bokningen hittades inte" });
+      }
+      
+      res.json(updatedBooking);
+    } catch (error) {
+      console.error("Error updating booking status:", error);
+      res.status(500).json({ error: "Det gick inte att uppdatera bokningsstatusen" });
+    }
+  });
+  
   // Get bookings for a date range (for calendar)
   app.get("/api/bookings/availability", async (req: Request, res: Response) => {
     try {
@@ -291,6 +318,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching availability:", error);
       res.status(500).json({ error: "Failed to fetch availability" });
+    }
+  });
+  
+  // Export bookings data
+  app.get("/api/bookings/export", async (req: Request, res: Response) => {
+    try {
+      const exportFileName = await storage.exportBookings();
+      
+      // Send the file path for download
+      res.json({ 
+        success: true, 
+        message: "Bokningar har exporterats", 
+        fileName: exportFileName,
+        downloadUrl: `/api/bookings/download/${exportFileName}`
+      });
+    } catch (error) {
+      console.error("Error exporting bookings:", error);
+      res.status(500).json({ error: "Det gick inte att exportera bokningarna" });
+    }
+  });
+  
+  // Download exported bookings file
+  app.get("/api/bookings/download/:filename", async (req: Request, res: Response) => {
+    try {
+      const { filename } = req.params;
+      
+      // Security check to prevent directory traversal
+      if (filename.includes("..") || !filename.endsWith(".json")) {
+        return res.status(400).json({ error: "Invalid filename" });
+      }
+      
+      const filePath = path.join(__dirname, '../data', filename);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "Filen hittades inte" });
+      }
+      
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+      
+      // Stream the file to the response
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+    } catch (error) {
+      console.error("Error downloading export file:", error);
+      res.status(500).json({ error: "Det gick inte att ladda ner filen" });
     }
   });
 
