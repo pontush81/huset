@@ -20,14 +20,23 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
 
   // Handle navigation with smooth scrolling to section
   const handleNavClick = (slug: string) => {
+    // Special case for guest apartment (always go to dedicated page)
+    if (slug === "gastlagenhet") {
+      window.location.href = `/gastlagenhet`;
+      return;
+    }
+    
     // If we're already on the home page, just scroll to the section
     if (location === '/' || location === '') {
       const element = document.getElementById(slug);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        // If element is not found, probably we need to go to home page
+        window.location.href = `/#${slug}`;
       }
     } else {
-      // If we're on another page, go to home page first
+      // If we're on another page, go to home page with hash
       window.location.href = `/#${slug}`;
     }
   };

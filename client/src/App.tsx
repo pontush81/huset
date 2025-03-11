@@ -17,6 +17,7 @@ function Router() {
         <Route path="/gastlagenhet" component={GuestApartment} />
         <Route path="/admin/bokningar" component={ManageBookings} />
         <Route path="/admin/dashboard" component={AdminDashboard} />
+        <Route path="/#:section" component={Home} />
         <Route path="/:section" component={Home} />
         <Route component={NotFound} />
       </Switch>
