@@ -7,7 +7,38 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    touch-action: manipulation;
+  }
+
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased bg-background text-foreground overflow-x-hidden min-h-screen;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Bättre anpassning för iPhone och andra mobiltelefoner */
+  @media (max-width: 640px) {
+    input, select, textarea, button {
+      font-size: 16px !important; /* Förhindra zoom på fokus i iOS */
+    }
+    
+    img, table {
+      @apply max-w-full;
+    }
+  }
+}
+
+/* Förbättringar för responsiv design */
+@layer components {
+  .content-wrapper {
+    @apply px-3 md:px-6 py-4 md:py-6;
+  }
+  
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
   }
 }

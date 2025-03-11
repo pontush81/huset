@@ -35,10 +35,17 @@ export default function Layout({ children }: LayoutProps) {
       }
     };
 
+    // Lyssna på stängningseventet från Sidebar-komponenten
+    const handleCloseSidebar = () => {
+      setSidebarOpen(false);
+    };
+    
     document.addEventListener('click', handleClickOutside);
+    document.addEventListener('close-sidebar', handleCloseSidebar);
     
     return () => {
       document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('close-sidebar', handleCloseSidebar);
     };
   }, []);
 
@@ -105,10 +112,10 @@ export default function Layout({ children }: LayoutProps) {
         <Sidebar isOpen={sidebarOpen} currentSection={currentSection} />
 
         {/* Main Content */}
-        <main className="flex-grow md:ml-64 p-4">
+        <main className="flex-grow md:ml-64 px-3 py-4 md:p-4 w-full">
           <div className="container mx-auto max-w-4xl">
             {/* Breadcrumbs */}
-            <div className="text-sm mb-6 text-gray-500">
+            <div className="text-sm mb-4 md:mb-6 text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">
               <Link href="/" className="hover:text-primary">Hem</Link>
               {currentSection !== "hem" && (
                 <>
@@ -119,7 +126,9 @@ export default function Layout({ children }: LayoutProps) {
             </div>
 
             {/* Page content */}
-            {children}
+            <div className="overflow-x-hidden">
+              {children}
+            </div>
           </div>
         </main>
       </div>
