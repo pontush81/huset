@@ -69,23 +69,22 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                         <i className={`fas ${section.icon} mr-2 text-primary`}></i>
                         {section.title}
                       </a>
+                      
+                      {/* Lägg till 'Hantera bokningar' under Gästlägenhet */}
+                      {section.slug === "gastlagenhet" && (
+                        <Link href="/admin/bokningar" 
+                          className={`block py-2 px-3 ml-4 rounded ${
+                            location.includes("/admin/bokningar") 
+                              ? 'bg-secondary font-medium' 
+                              : 'hover:bg-secondary'
+                          } transition-colors duration-200 nav-link text-sm`}
+                        >
+                          <i className="fas fa-calendar-check mr-2 text-primary"></i>
+                          Hantera bokningar
+                        </Link>
+                      )}
                     </li>
                   ))}
-                  <div className="border-t border-gray-200 my-4 pt-2">
-                    <h3 className="font-semibold text-sm ml-3 text-gray-500 uppercase tracking-wider mb-2">Administration</h3>
-                    <li className="mb-1">
-                      <Link href="/admin/bokningar" 
-                        className={`block py-2 px-3 rounded ${
-                          location.includes("/admin/bokningar") 
-                            ? 'bg-secondary font-medium' 
-                            : 'hover:bg-secondary'
-                        } transition-colors duration-200 nav-link`}
-                      >
-                        <i className="fas fa-calendar-check mr-2 text-primary"></i>
-                        Hantera bokningar
-                      </Link>
-                    </li>
-                  </div>
                 </>
               )}
             </ul>

@@ -258,32 +258,7 @@ export default function BookingForm() {
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="guestCount"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Antal gäster</FormLabel>
-                  <Select
-                    onValueChange={(value) => field.onChange(parseInt(value))}
-                    defaultValue={field.value.toString()}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Välj antal gäster" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="1">1 person</SelectItem>
-                      <SelectItem value="2">2 personer</SelectItem>
-                      <SelectItem value="3">3 personer</SelectItem>
-                      <SelectItem value="4">4 personer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
             
             <FormField
               control={form.control}

@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -239,56 +238,9 @@ export default function BookingManager() {
           <p className="text-gray-500">Inga bokningar hittades</p>
         </div>
       ) : (
-        <Tabs defaultValue="pending" className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="pending">
-              Väntande ({pendingBookings.length})
-            </TabsTrigger>
-            <TabsTrigger value="confirmed">
-              Bekräftade ({confirmedBookings.length})
-            </TabsTrigger>
-            <TabsTrigger value="cancelled">
-              Avbokade ({cancelledBookings.length})
-            </TabsTrigger>
-            <TabsTrigger value="all">
-              Alla ({bookings?.length})
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="pending" className="mt-0">
-            {pendingBookings.length > 0 ? (
-              pendingBookings.map(renderBookingCard)
-            ) : (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <p className="text-gray-500">Inga väntande bokningar</p>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="confirmed" className="mt-0">
-            {confirmedBookings.length > 0 ? (
-              confirmedBookings.map(renderBookingCard)
-            ) : (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <p className="text-gray-500">Inga bekräftade bokningar</p>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="cancelled" className="mt-0">
-            {cancelledBookings.length > 0 ? (
-              cancelledBookings.map(renderBookingCard)
-            ) : (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <p className="text-gray-500">Inga avbokade bokningar</p>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="all" className="mt-0">
-            {bookings?.map(renderBookingCard) || []}
-          </TabsContent>
-        </Tabs>
+        <div className="space-y-4">
+          {bookings?.map(renderBookingCard)}
+        </div>
       )}
       
       {/* Cancellation confirmation dialog */}

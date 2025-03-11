@@ -10,7 +10,11 @@
     "message": null,
     "id": 1,
     "status": "cancelled",
-    "createdAt": "2025-03-11T10:46:57.127Z"
+    "createdAt": "2025-03-11T10:46:57.127Z",
+    "checkInDate_formatted": "2025-03-15",
+    "checkOutDate_formatted": "2025-03-16",
+    "createdAt_formatted": "2025-03-11 10:46:57",
+    "nights": 1
   },
   {
     "name": "Pontus Hörberg",
@@ -23,7 +27,11 @@
     "message": null,
     "status": "cancelled",
     "id": 2,
-    "createdAt": "2025-03-11T10:54:09.015Z"
+    "createdAt": "2025-03-11T10:54:09.015Z",
+    "checkInDate_formatted": "2025-03-22",
+    "checkOutDate_formatted": "2025-03-23",
+    "createdAt_formatted": "2025-03-11 10:54:09",
+    "nights": 1
   },
   {
     "name": "Pontus Hörberg",
@@ -34,9 +42,13 @@
     "checkOutDate": "2025-03-16",
     "guestCount": 1,
     "message": null,
-    "status": "confirmed",
+    "status": "pending",
     "id": 3,
-    "createdAt": "2025-03-11T10:55:03.148Z"
+    "createdAt": "2025-03-11T10:55:03.148Z",
+    "checkInDate_formatted": "2025-03-15",
+    "checkOutDate_formatted": "2025-03-16",
+    "createdAt_formatted": "2025-03-11 10:55:03",
+    "nights": 1
   },
   {
     "name": "Pontus Hörberg",
@@ -49,6 +61,10 @@
     "message": null,
     "status": "pending",
     "id": 4,
-    "createdAt": "2025-03-11T10:56:24.058Z"
+    "createdAt": "2025-03-11T10:56:24.058Z",
+    "checkInDate_formatted": "2025-03-22",
+    "checkOutDate_formatted": "2025-03-28",
+    "createdAt_formatted": "2025-03-11 10:56:24",
+    "nights": 6
   }
 ]
