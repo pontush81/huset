@@ -13,6 +13,7 @@ import {
   isBefore, 
   isAfter, 
   isSameDay,
+  startOfDay,
   getWeek,
   startOfWeek,
   addDays
@@ -106,16 +107,26 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
   const isInSelectedRange = (date: Date) => {
     if (!selectedDates?.checkIn || !selectedDates?.checkOut) return false;
     
-    // Clear time components for accurate date comparison
-    const dayStart = startOfDay(date);
-    const checkInDay = startOfDay(selectedDates.checkIn);
-    const checkOutDay = startOfDay(selectedDates.checkOut);
+    // Create normalized date objects (year, month, day only) for comparison
+    const dateObj = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const checkInObj = new Date(
+      selectedDates.checkIn.getFullYear(),
+      selectedDates.checkIn.getMonth(),
+      selectedDates.checkIn.getDate()
+    );
+    const checkOutObj = new Date(
+      selectedDates.checkOut.getFullYear(),
+      selectedDates.checkOut.getMonth(),
+      selectedDates.checkOut.getDate()
+    );
+    
+    // Convert to timestamps for comparison
+    const dateTime = dateObj.getTime();
+    const checkInTime = checkInObj.getTime();
+    const checkOutTime = checkOutObj.getTime();
     
     // Return true if date is between check-in and check-out (not inclusive)
-    return (
-      isAfter(dayStart, checkInDay) && 
-      isBefore(dayStart, checkOutDay)
-    );
+    return dateTime > checkInTime && dateTime < checkOutTime;
   };
 
   // Generate day element with appropriate styling

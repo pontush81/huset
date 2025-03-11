@@ -5,6 +5,7 @@
 @layer base {
   :root {
     --primary-light: 210 90% 95%;
+    --primary: 210 90% 30%;
   }
   
   * {
