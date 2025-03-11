@@ -130,33 +130,42 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
       dayClass += " bg-primary text-white font-medium z-10";
       
       // Add indicator text for check-in/check-out
-      if (selectedDates?.checkIn && isSameDay(day, selectedDates.checkIn)) {
+      if (selectedDates?.checkIn && day.getTime() === selectedDates.checkIn.getTime()) {
         dayStyles = { 
           ...dayStyles,
-          boxShadow: "inset 2px 0 0 #fff, inset -2px 0 0 #fff, inset 0 2px 0 #fff, inset 0 -2px 0 #fff"
+          borderRadius: "50%",
+          boxShadow: "0 0 0 2px #fff"
         };
-      } else if (selectedDates?.checkOut && isSameDay(day, selectedDates.checkOut)) {
+      } else if (selectedDates?.checkOut && day.getTime() === selectedDates.checkOut.getTime()) {
         dayStyles = { 
           ...dayStyles,
-          boxShadow: "inset 2px 0 0 #fff, inset -2px 0 0 #fff, inset 0 2px 0 #fff, inset 0 -2px 0 #fff"
+          borderRadius: "50%",
+          boxShadow: "0 0 0 2px #fff"
         };
       }
     } else if (isInRange) {
-      // Dates in the range get lighter accent background
+      // Dates in the range get accent background with better style
       dayClass += " bg-primary/20";
       
-      // Add horizontal connector if in a date range
+      // Set proper styling for range
       if (selectedDates?.checkIn && selectedDates?.checkOut) {
-        const isFirstDay = isSameDay(day, addDays(selectedDates.checkIn, 1));
-        const isLastDay = isSameDay(day, addDays(selectedDates.checkOut, -1));
+        // First day after check-in
+        const dayAfterCheckIn = new Date(selectedDates.checkIn);
+        dayAfterCheckIn.setDate(dayAfterCheckIn.getDate() + 1);
         
-        if (isFirstDay) {
-          rangeClass = "before:absolute before:left-0 before:w-1/2 before:h-full before:bg-primary/20";
-        } else if (isLastDay) {
-          rangeClass = "after:absolute after:right-0 after:w-1/2 after:h-full after:bg-primary/20";
-        } else {
-          rangeClass = "before:absolute before:left-0 before:w-full before:h-full before:bg-primary/20";
-        }
+        // Day before check-out
+        const dayBeforeCheckOut = new Date(selectedDates.checkOut);
+        dayBeforeCheckOut.setDate(dayBeforeCheckOut.getDate() - 1);
+        
+        // Check positions for styling
+        const isFirstDay = day.getTime() === dayAfterCheckIn.getTime();
+        const isLastDay = day.getTime() === dayBeforeCheckOut.getTime();
+        
+        // Apply appropriate styling based on position in range
+        dayStyles = {
+          ...dayStyles,
+          background: "rgba(var(--primary), 0.2)"
+        };
       }
     }
     
@@ -168,12 +177,12 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
         disabled={isBooked || isBefore(day, new Date())}
       >
         {dayNumber}
-        {selectedDates?.checkIn && isSameDay(day, selectedDates.checkIn) && (
+        {selectedDates?.checkIn && day.getTime() === selectedDates.checkIn.getTime() && (
           <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-[8px] font-medium text-primary-foreground">
             In
           </span>
         )}
-        {selectedDates?.checkOut && isSameDay(day, selectedDates.checkOut) && (
+        {selectedDates?.checkOut && day.getTime() === selectedDates.checkOut.getTime() && (
           <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-[8px] font-medium text-primary-foreground">
             Ut
           </span>

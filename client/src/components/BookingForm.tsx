@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format } from "date-fns";
+import { format, addDays, isSameDay } from "date-fns";
 import { sv } from "date-fns/locale";
 import { insertBookingSchema } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
@@ -134,7 +134,7 @@ export default function BookingForm() {
         });
         // Format the date as a string for the form
         form.setValue("checkOutDate", format(date, 'yyyy-MM-dd'));
-      } else if (isSameDay(date, selectedDates.checkIn)) {
+      } else if (date.getTime() === selectedDates.checkIn.getTime()) {
         // If clicking same date, require at least 1 day stay
         const nextDay = addDays(date, 1);
         setSelectedDates({
