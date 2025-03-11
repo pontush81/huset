@@ -232,17 +232,26 @@ export default function AdminDashboard() {
         onValueChange={setCurrentTab}
         className="space-y-4"
       >
-        <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
-          <TabsTrigger value="sections">Sektioner</TabsTrigger>
-          <TabsTrigger value="documents">Dokument</TabsTrigger>
-          <TabsTrigger value="administration">Administration</TabsTrigger>
+        <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto overflow-x-auto">
+          <TabsTrigger value="sections" className="mobile-touch-target">
+            <i className="fas fa-file-alt mr-2 hidden sm:inline"></i>
+            <span>Sektioner</span>
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="mobile-touch-target">
+            <i className="fas fa-folder mr-2 hidden sm:inline"></i>
+            <span>Dokument</span>
+          </TabsTrigger>
+          <TabsTrigger value="administration" className="mobile-touch-target">
+            <i className="fas fa-cog mr-2 hidden sm:inline"></i>
+            <span>Administration</span>
+          </TabsTrigger>
         </TabsList>
         
         {/* Sections Tab */}
         <TabsContent value="sections" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
                   <CardTitle>Hantera Sektioner</CardTitle>
                   <CardDescription>
@@ -252,7 +261,7 @@ export default function AdminDashboard() {
                 
                 <Button
                   onClick={() => setOpenNewSectionDialog(true)}
-                  className="bg-primary text-white"
+                  className="bg-primary text-white mobile-touch-target"
                   size="sm"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -270,7 +279,7 @@ export default function AdminDashboard() {
                   {sections?.filter(section => section.slug !== 'footer').map(section => (
                     <div 
                       key={section.id} 
-                      className="border rounded-lg p-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
+                      className="border rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-50 transition-colors gap-4"
                     >
                       <div>
                         <div className="flex items-center">
@@ -285,7 +294,7 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 w-full sm:w-auto justify-start sm:justify-end mt-2 sm:mt-0">
                         <Button
                           variant="outline"
                           size="sm"
@@ -322,7 +331,7 @@ export default function AdminDashboard() {
         <TabsContent value="documents" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
                   <CardTitle>Hantera Dokument</CardTitle>
                   <CardDescription>
@@ -339,7 +348,7 @@ export default function AdminDashboard() {
                         handleCategorySelect(category);
                       }
                     }}
-                    className="bg-primary text-white"
+                    className="bg-primary text-white mobile-touch-target"
                     size="sm"
                   >
                     <FileUp className="h-4 w-4 mr-2" />
