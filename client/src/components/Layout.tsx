@@ -148,7 +148,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
           
           <div className="mt-6 pt-4 border-t border-white/20 text-center text-sm opacity-70">
-            <p>© {new Date().getFullYear()} {footerData?.copyright || ''}</p>
+            {footerData?.copyright && <p>{footerData.copyright}</p>}
           </div>
         </div>
       </footer>

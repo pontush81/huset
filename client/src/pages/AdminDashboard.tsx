@@ -232,9 +232,10 @@ export default function AdminDashboard() {
         onValueChange={setCurrentTab}
         className="space-y-4"
       >
-        <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto">
+        <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
           <TabsTrigger value="sections">Sektioner</TabsTrigger>
           <TabsTrigger value="documents">Dokument</TabsTrigger>
+          <TabsTrigger value="administration">Administration</TabsTrigger>
         </TabsList>
         
         {/* Sections Tab */}
@@ -266,7 +267,7 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {sections?.map(section => (
+                  {sections?.filter(section => section.slug !== 'footer').map(section => (
                     <div 
                       key={section.id} 
                       className="border rounded-lg p-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
@@ -420,6 +421,96 @@ export default function AdminDashboard() {
                     Det finns inga dokument uppladdade ännu. Använd "Ladda upp" knappen för att lägga till dokument.
                   </AlertDescription>
                 </Alert>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Administration Tab */}
+        <TabsContent value="administration" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Sidfotsinställningar</CardTitle>
+                  <CardDescription>
+                    Anpassa information som visas i sidfoten på alla sidor.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingSections ? (
+                <div className="flex justify-center items-center p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
+                </div>
+              ) : (
+                <>
+                  {(() => {
+                    const footerSection = sections?.find(s => s.slug === 'footer');
+                    if (!footerSection) {
+                      return (
+                        <Alert>
+                          <AlertTitle>Kunde inte hitta sidfot</AlertTitle>
+                          <AlertDescription>
+                            Sidfotsinställningar kunde inte hittas. Kontakta systemadministratören.
+                          </AlertDescription>
+                        </Alert>
+                      );
+                    }
+                    
+                    let footerData;
+                    try {
+                      footerData = footerSection.content ? JSON.parse(footerSection.content) : null;
+                    } catch (e) {
+                      console.error("Error parsing footer content:", e);
+                      footerData = null;
+                    }
+                    
+                    return (
+                      <div className="space-y-6">
+                        <div className="border rounded-lg p-6">
+                          <h3 className="text-lg font-medium mb-4">Sidfotsinformation</h3>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Adress</p>
+                              <p className="font-medium">{footerData?.address || '-'}</p>
+                            </div>
+                            
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">E-postadress</p>
+                              <p className="font-medium">{footerData?.email || '-'}</p>
+                            </div>
+                            
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Telefonnummer</p>
+                              <p className="font-medium">{footerData?.phone || '-'}</p>
+                            </div>
+                            
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Copyright</p>
+                              <p className="font-medium">{footerData?.copyright || '-'}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-end">
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setEditingSection(footerSection);
+                                setOpenDialog(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Redigera sidfot
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </>
               )}
             </CardContent>
           </Card>
