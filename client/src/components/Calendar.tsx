@@ -78,9 +78,27 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
   const isSelectedDate = (date: Date) => {
     if (!selectedDates) return false;
     
+    // Create normalized date objects for comparison
+    const dateObj = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    
+    const checkInObj = selectedDates.checkIn ? 
+      new Date(
+        selectedDates.checkIn.getFullYear(), 
+        selectedDates.checkIn.getMonth(), 
+        selectedDates.checkIn.getDate()
+      ) : null;
+    
+    const checkOutObj = selectedDates.checkOut ? 
+      new Date(
+        selectedDates.checkOut.getFullYear(), 
+        selectedDates.checkOut.getMonth(), 
+        selectedDates.checkOut.getDate()
+      ) : null;
+    
+    // Compare the date objects
     return (
-      (selectedDates.checkIn && isSameDay(date, selectedDates.checkIn)) ||
-      (selectedDates.checkOut && isSameDay(date, selectedDates.checkOut))
+      (checkInObj && dateObj.getTime() === checkInObj.getTime()) ||
+      (checkOutObj && dateObj.getTime() === checkOutObj.getTime())
     );
   };
 
@@ -141,14 +159,34 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
       // Selected dates (check-in/check-out) get accent highlight
       dayClass += " bg-primary text-white font-medium z-10";
       
-      // Add indicator text for check-in/check-out
-      if (selectedDates?.checkIn && day.getTime() === selectedDates.checkIn.getTime()) {
+      // Add indicator styling for check-in/check-out
+      const normalizedDayDate = new Date(
+        day.getFullYear(), 
+        day.getMonth(), 
+        day.getDate()
+      ).getTime();
+      
+      const normalizedCheckInDate = selectedDates?.checkIn ? 
+        new Date(
+          selectedDates.checkIn.getFullYear(), 
+          selectedDates.checkIn.getMonth(), 
+          selectedDates.checkIn.getDate()
+        ).getTime() : null;
+      
+      const normalizedCheckOutDate = selectedDates?.checkOut ? 
+        new Date(
+          selectedDates.checkOut.getFullYear(), 
+          selectedDates.checkOut.getMonth(), 
+          selectedDates.checkOut.getDate()
+        ).getTime() : null;
+      
+      if (normalizedCheckInDate && normalizedDayDate === normalizedCheckInDate) {
         dayStyles = { 
           ...dayStyles,
           borderRadius: "50%",
           boxShadow: "0 0 0 2px #fff"
         };
-      } else if (selectedDates?.checkOut && day.getTime() === selectedDates.checkOut.getTime()) {
+      } else if (normalizedCheckOutDate && normalizedDayDate === normalizedCheckOutDate) {
         dayStyles = { 
           ...dayStyles,
           borderRadius: "50%",
@@ -172,12 +210,30 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
         disabled={isBooked || isBefore(day, new Date())}
       >
         {dayNumber}
-        {selectedDates?.checkIn && day.getTime() === selectedDates.checkIn.getTime() && (
+        {selectedDates?.checkIn && isSelectedDate(day) && 
+          new Date(
+            selectedDates.checkIn.getFullYear(), 
+            selectedDates.checkIn.getMonth(), 
+            selectedDates.checkIn.getDate()
+          ).getTime() === new Date(
+            day.getFullYear(), 
+            day.getMonth(), 
+            day.getDate()
+          ).getTime() && (
           <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-[8px] font-medium text-primary-foreground">
             In
           </span>
         )}
-        {selectedDates?.checkOut && day.getTime() === selectedDates.checkOut.getTime() && (
+        {selectedDates?.checkOut && isSelectedDate(day) && 
+          new Date(
+            selectedDates.checkOut.getFullYear(), 
+            selectedDates.checkOut.getMonth(), 
+            selectedDates.checkOut.getDate()
+          ).getTime() === new Date(
+            day.getFullYear(), 
+            day.getMonth(), 
+            day.getDate()
+          ).getTime() && (
           <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-[8px] font-medium text-primary-foreground">
             Ut
           </span>
