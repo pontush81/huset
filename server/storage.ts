@@ -48,6 +48,12 @@ export interface IStorage {
   getSectionBySlug(slug: string): Promise<Section | undefined>;
   createSection(section: InsertSection): Promise<Section>;
   updateSection(id: number, content: string): Promise<Section | undefined>;
+  updateSectionData(id: number, data: {
+    content?: string;
+    title?: string;
+    slug?: string;
+    icon?: string;
+  }): Promise<Section | undefined>;
 }
 
 // In-memory implementation of the storage interface
@@ -352,6 +358,34 @@ export class MemStorage implements IStorage {
     
     const now = new Date();
     const updatedSection = { ...section, content, updatedAt: now };
+    this.sections.set(id, updatedSection);
+    return updatedSection;
+  }
+  
+  async updateSectionData(id: number, data: {
+    content?: string;
+    title?: string;
+    slug?: string;
+    icon?: string;
+  }): Promise<Section | undefined> {
+    const section = this.sections.get(id);
+    if (!section) return undefined;
+    
+    // Om vi uppdaterar slug, kontrollera så att det inte redan finns
+    if (data.slug && data.slug !== section.slug) {
+      const existingSection = await this.getSectionBySlug(data.slug);
+      if (existingSection && existingSection.id !== id) {
+        throw new Error("A section with this slug already exists");
+      }
+    }
+    
+    const now = new Date();
+    const updatedSection = { 
+      ...section, 
+      ...data,
+      updatedAt: now 
+    };
+    
     this.sections.set(id, updatedSection);
     return updatedSection;
   }

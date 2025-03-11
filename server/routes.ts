@@ -65,14 +65,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Update section content
+  // Update section content and metadata
   app.patch("/api/sections/:id", async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { content } = req.body;
+      const { content, title, slug, icon } = req.body;
       
-      if (!content || typeof content !== 'string') {
-        return res.status(400).json({ error: "Content is required and must be a string" });
+      const updateData: any = {};
+      
+      // Validera vilka fält som ska uppdateras
+      if (content !== undefined) updateData.content = content;
+      if (title !== undefined) updateData.title = title;
+      if (slug !== undefined) updateData.slug = slug;
+      if (icon !== undefined) updateData.icon = icon;
+      
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ error: "No valid update fields provided" });
       }
       
       const sectionId = parseInt(id);
@@ -80,7 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid section ID" });
       }
       
-      const updatedSection = await storage.updateSection(sectionId, content);
+      const updatedSection = await storage.updateSectionData(sectionId, updateData);
       
       if (!updatedSection) {
         return res.status(404).json({ error: "Section not found" });
@@ -90,6 +98,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating section:", error);
       res.status(500).json({ error: "Failed to update section" });
+    }
+  });
+  
+  // Add a new section
+  app.post("/api/sections", async (req: Request, res: Response) => {
+    try {
+      const { title, slug, icon, content } = req.body;
+      
+      if (!title || !slug) {
+        return res.status(400).json({ error: "Title and slug are required" });
+      }
+      
+      // Kontrollera om slug redan finns
+      const existingSection = await storage.getSectionBySlug(slug);
+      if (existingSection) {
+        return res.status(400).json({ error: "A section with this slug already exists" });
+      }
+      
+      const newSection = await storage.createSection({
+        title,
+        slug,
+        icon: icon || "fa-file-alt",
+        content: content || "Nytt innehåll",
+      });
+      
+      res.status(201).json(newSection);
+    } catch (error) {
+      console.error("Error creating section:", error);
+      res.status(500).json({ error: "Failed to create section" });
     }
   });
   
