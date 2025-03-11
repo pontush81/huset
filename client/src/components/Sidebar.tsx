@@ -73,11 +73,11 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                             document.dispatchEvent(new Event('close-sidebar'));
                           }
                         }}
-                        className={`flex items-center text-sm md:text-base py-2 px-2 md:px-3 rounded ${
+                        className={`flex items-center text-sm md:text-base py-3 px-3 md:px-3 rounded touch-manipulation ${
                           currentSection === section.slug 
                             ? 'bg-secondary font-medium' 
                             : 'hover:bg-secondary'
-                        } transition-colors duration-200 nav-link`}
+                        } transition-colors duration-200 nav-link ios-tap-highlight-fix`}
                       >
                         <i className={`fas ${section.icon} mr-2 text-primary w-5 text-center`}></i>
                         <span className="truncate">{section.title}</span>
@@ -92,11 +92,11 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                               document.dispatchEvent(new Event('close-sidebar'));
                             }
                           }}
-                          className={`flex items-center text-xs md:text-sm py-1.5 md:py-2 px-2 md:px-3 ml-4 rounded ${
+                          className={`flex items-center text-xs md:text-sm py-2.5 md:py-2.5 px-3 md:px-3 ml-4 rounded touch-manipulation ${
                             location.includes("/admin/bokningar") 
                               ? 'bg-secondary font-medium' 
                               : 'hover:bg-secondary'
-                          } transition-colors duration-200 nav-link`}
+                          } transition-colors duration-200 nav-link ios-tap-highlight-fix`}
                         >
                           <i className="fas fa-calendar-check mr-2 text-primary w-4 text-center"></i>
                           <span className="truncate">Hantera bokningar</span>
@@ -123,11 +123,11 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                         document.dispatchEvent(new Event('close-sidebar'));
                       }
                     }}
-                    className={`flex items-center text-sm md:text-base py-2 px-2 md:px-3 rounded ${
+                    className={`flex items-center text-sm md:text-base py-3 px-3 md:px-3 rounded touch-manipulation ${
                       location.includes("/admin/dashboard") 
                         ? 'bg-secondary font-medium' 
                         : 'hover:bg-secondary'
-                    } transition-colors duration-200 nav-link`}
+                    } transition-colors duration-200 nav-link ios-tap-highlight-fix`}
                   >
                     <i className="fas fa-gauge mr-2 text-primary w-5 text-center"></i>
                     <span className="truncate">Admin Dashboard</span>
@@ -141,11 +141,11 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                         document.dispatchEvent(new Event('close-sidebar'));
                       }
                     }}
-                    className={`flex items-center text-sm md:text-base py-2 px-2 md:px-3 rounded ${
+                    className={`flex items-center text-sm md:text-base py-3 px-3 md:px-3 rounded touch-manipulation ${
                       location.includes("/admin/bokningar") 
                         ? 'bg-secondary font-medium' 
                         : 'hover:bg-secondary'
-                    } transition-colors duration-200 nav-link`}
+                    } transition-colors duration-200 nav-link ios-tap-highlight-fix`}
                   >
                     <i className="fas fa-calendar-alt mr-2 text-primary w-5 text-center"></i>
                     <span className="truncate">Bokningar</span>

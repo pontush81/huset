@@ -110,8 +110,8 @@ export default function DocumentList({ category, limit }: DocumentListProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Dokument</TableHead>
-              <TableHead>Uppladdad</TableHead>
+              <TableHead className="min-w-[180px]">Dokument</TableHead>
+              <TableHead className="hidden sm:table-cell">Uppladdad</TableHead>
               <TableHead className="text-right">Handling</TableHead>
             </TableRow>
           </TableHeader>
