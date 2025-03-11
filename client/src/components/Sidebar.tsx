@@ -18,9 +18,18 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
     queryKey: ['/api/sections'],
   });
 
-  // Handle navigation with direct URL approach for mobile
+  // Handle navigation with smooth scrolling to section
   const handleNavClick = (slug: string) => {
-    window.location.href = `/${slug}`;
+    // If we're already on the home page, just scroll to the section
+    if (location === '/' || location === '') {
+      const element = document.getElementById(slug);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      // If we're on another page, go to home page first
+      window.location.href = `/#${slug}`;
+    }
   };
   
   // Handle admin navigation with direct URL
