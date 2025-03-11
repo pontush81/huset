@@ -86,16 +86,28 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
 
   // Check if date is between selected dates (for highlighting the entire range)
   const isInSelectedRange = (date: Date) => {
-    if (!selectedDates || !selectedDates.checkIn) return false;
+    if (!selectedDates?.checkIn || !selectedDates?.checkOut) return false;
     
-    // If only check-in is selected, don't highlight any range
-    if (!selectedDates.checkOut) return false;
-    
-    // Now highlight all dates between check-in and check-out (not inclusive of endpoints)
-    return (
-      isAfter(date, selectedDates.checkIn) && 
-      isBefore(date, selectedDates.checkOut)
+    // Convert all dates to new Date objects with only year, month, day components
+    const dateObj = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const checkInObj = new Date(
+      selectedDates.checkIn.getFullYear(),
+      selectedDates.checkIn.getMonth(), 
+      selectedDates.checkIn.getDate()
     );
+    const checkOutObj = new Date(
+      selectedDates.checkOut.getFullYear(),
+      selectedDates.checkOut.getMonth(), 
+      selectedDates.checkOut.getDate()
+    );
+    
+    // Convert to timestamps for comparison
+    const dateTime = dateObj.getTime();
+    const checkInTime = checkInObj.getTime();
+    const checkOutTime = checkOutObj.getTime();
+    
+    // Return true if date is strictly between check-in and check-out
+    return dateTime > checkInTime && dateTime < checkOutTime;
   };
 
   // Generate day element with appropriate styling
@@ -144,29 +156,12 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
         };
       }
     } else if (isInRange) {
-      // Dates in the range get accent background with better style
-      dayClass += " bg-primary/20";
-      
-      // Set proper styling for range
-      if (selectedDates?.checkIn && selectedDates?.checkOut) {
-        // First day after check-in
-        const dayAfterCheckIn = new Date(selectedDates.checkIn);
-        dayAfterCheckIn.setDate(dayAfterCheckIn.getDate() + 1);
-        
-        // Day before check-out
-        const dayBeforeCheckOut = new Date(selectedDates.checkOut);
-        dayBeforeCheckOut.setDate(dayBeforeCheckOut.getDate() - 1);
-        
-        // Check positions for styling
-        const isFirstDay = day.getTime() === dayAfterCheckIn.getTime();
-        const isLastDay = day.getTime() === dayBeforeCheckOut.getTime();
-        
-        // Apply appropriate styling based on position in range
-        dayStyles = {
-          ...dayStyles,
-          background: "rgba(var(--primary), 0.2)"
-        };
-      }
+      // Dates in the range use a uniform background color
+      dayStyles = {
+        ...dayStyles,
+        backgroundColor: "var(--primary-light, #edf2f7)",
+        background: "var(--primary-light, #edf2f7)"
+      };
     }
     
     return (

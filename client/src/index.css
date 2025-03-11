@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --primary-light: 210 90% 95%;
+  }
+  
   * {
     @apply border-border;
   }
