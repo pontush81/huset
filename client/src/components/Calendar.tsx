@@ -292,7 +292,7 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
             <Checkbox 
               id="show-weeks"
               checked={showWeekNumbers}
-              onCheckedChange={setShowWeekNumbers}
+              onCheckedChange={(checked) => checked !== undefined && setShowWeekNumbers(!!checked)}
             />
             <label 
               htmlFor="show-weeks" 

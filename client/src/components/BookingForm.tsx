@@ -24,12 +24,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 
-// Extend the booking schema with additional validation
-const bookingFormSchema = insertBookingSchema.extend({
-  terms: z.boolean().refine(val => val === true, {
-    message: "Du måste godkänna reglerna för att boka",
-  }),
-});
+// Use the booking schema from the shared schema definition
+const bookingFormSchema = insertBookingSchema;
 
 type BookingFormValues = z.infer<typeof bookingFormSchema>;
 
@@ -56,7 +52,6 @@ export default function BookingForm() {
       checkOutDate: format(new Date(), 'yyyy-MM-dd'),
       guestCount: 1,
       message: "", // Always initialize with empty string, never null
-      terms: false,
     },
   });
 
@@ -293,27 +288,6 @@ export default function BookingForm() {
           </div>
           
           <div className="mt-6">
-            <FormField
-              control={form.control}
-              name="terms"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 mb-4">
-                  <FormControl>
-                    <Checkbox 
-                      checked={field.value} 
-                      onCheckedChange={field.onChange} 
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      Jag godkänner <a href="#" className="text-primary hover:underline">reglerna</a> för användning av gästlägenheten
-                    </FormLabel>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            
             <Button 
               type="submit" 
               className="bg-primary hover:bg-primary/90 text-white px-6 py-3"
