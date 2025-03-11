@@ -22,7 +22,7 @@ import { sv } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CalendarProps {
@@ -288,14 +288,19 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
         </div>
         
         <div className="flex items-center gap-2 px-4 pb-4 sm:pb-0 sm:pr-4 sm:border-l">
-          <label htmlFor="show-weeks" className="text-sm">
-            Visa veckonummer
-          </label>
-          <Switch 
-            id="show-weeks"
-            checked={showWeekNumbers}
-            onCheckedChange={setShowWeekNumbers}
-          />
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="show-weeks"
+              checked={showWeekNumbers}
+              onCheckedChange={setShowWeekNumbers}
+            />
+            <label 
+              htmlFor="show-weeks" 
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Visa veckonummer
+            </label>
+          </div>
         </div>
       </div>
       
