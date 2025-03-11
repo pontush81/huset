@@ -66,8 +66,8 @@ export default function BookingForm() {
       apiRequest("POST", "/api/bookings", data),
     onSuccess: () => {
       toast({
-        title: "Bokning bekräftad",
-        description: "Din bokning har bekräftats. Du kommer att få en bekräftelse via e-post.",
+        title: "Bokning genomförd",
+        description: "Din bokning har registrerats.",
       });
       // Reset form and selected dates
       form.reset();
@@ -75,6 +75,8 @@ export default function BookingForm() {
       
       // Invalidate the availability cache to refresh the calendar
       queryClient.invalidateQueries({ queryKey: ['/api/bookings/availability'] });
+      // Invalidate bookings list to ensure the new booking appears in the management view
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
     },
     onError: (error: Error) => {
       toast({

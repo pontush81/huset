@@ -176,13 +176,9 @@ export default function BookingManager() {
             <p className="text-sm text-gray-500">Lägenhet</p>
             <p>{booking.apartmentNumber}</p>
           </div>
-          <div>
+          <div className="md:col-span-2">
             <p className="text-sm text-gray-500">Kontakt</p>
             <p>{booking.phone} · {booking.email}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Antal gäster</p>
-            <p>{booking.guestCount}</p>
           </div>
         </div>
         

@@ -247,7 +247,7 @@ export class MemStorage implements IStorage {
     const booking: Booking = { 
       ...insertBooking, 
       id, 
-      status: 'pending', 
+      status: insertBooking.status || 'confirmed', // Sätt status till 'confirmed' som standard
       createdAt: now,
       // Ensure message is never undefined
       message: insertBooking.message || null
