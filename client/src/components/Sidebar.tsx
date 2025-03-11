@@ -26,7 +26,8 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
   return (
     <aside 
       id="sidebar" 
-      className={`w-64 fixed h-full left-0 top-0 transform bg-white border-r shadow-md
+      style={{backgroundColor: "#ffffff"}}
+      className={`w-64 fixed h-full left-0 top-0 transform border-r shadow-md
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         md:translate-x-0 transition-transform duration-300 z-30 overflow-y-auto pt-14 md:pt-16`}
     >

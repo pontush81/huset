@@ -26,7 +26,16 @@
   
   /* Fixa problem med menyn i mobilt läge */
   #sidebar {
-    background-color: white !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+  }
+  
+  /* Specifika iPhone-stilar */
+  @supports (-webkit-touch-callout: none) {
+    #sidebar {
+      background-color: #ffffff !important;
+      background: #ffffff !important;
+    }
   }
   
   /* Bättre anpassning för iPhone och andra mobiltelefoner */
