@@ -383,13 +383,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const bookings = await storage.getBookingsForDateRange(start, end);
       
-      // Return only necessary booking info for calendar display
-      const calendarBookings = bookings.map(booking => ({
-        id: booking.id,
-        checkInDate: booking.checkInDate,
-        checkOutDate: booking.checkOutDate,
-        status: booking.status
-      }));
+      // Return only necessary booking info for calendar display, filter out cancelled bookings
+      const calendarBookings = bookings
+        .filter(booking => booking.status !== 'cancelled')
+        .map(booking => ({
+          id: booking.id,
+          checkInDate: booking.checkInDate,
+          checkOutDate: booking.checkOutDate,
+          status: booking.status
+        }));
       
       res.json(calendarBookings);
     } catch (error) {

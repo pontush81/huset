@@ -117,7 +117,7 @@ export default function Layout({ children }: LayoutProps) {
         <Sidebar isOpen={sidebarOpen} currentSection={currentSection} />
 
         {/* Main Content */}
-        <main className="flex-grow md:ml-64 px-3 py-4 md:p-4 w-full">
+        <main className="flex-grow md:ml-64 px-3 py-4 md:p-4 w-full overflow-y-auto">
           <div className="container mx-auto max-w-4xl">
             {/* Breadcrumbs */}
             <div className="text-sm mb-4 md:mb-6 text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">

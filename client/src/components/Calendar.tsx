@@ -64,6 +64,9 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
     if (!bookings) return false;
     
     return bookings.some(booking => {
+      // Skip cancelled bookings (though they should be filtered out on the server)
+      if (booking.status === 'cancelled') return false;
+      
       const checkIn = parseISO(booking.checkInDate);
       const checkOut = parseISO(booking.checkOutDate);
       

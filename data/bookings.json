@@ -99,7 +99,7 @@
     "checkOutDate": "2025-03-23",
     "guestCount": 1,
     "message": null,
-    "status": "confirmed",
+    "status": "cancelled",
     "id": 8,
     "createdAt": "2025-03-11T15:11:46.513Z"
   },
@@ -112,7 +112,7 @@
     "checkOutDate": "2025-03-30",
     "guestCount": 1,
     "message": null,
-    "status": "confirmed",
+    "status": "cancelled",
     "id": 9,
     "createdAt": "2025-03-11T17:18:54.138Z"
   },
@@ -125,8 +125,34 @@
     "checkOutDate": "2025-04-06",
     "guestCount": 1,
     "message": null,
-    "status": "confirmed",
+    "status": "cancelled",
     "id": 10,
     "createdAt": "2025-03-11T19:09:39.399Z"
+  },
+  {
+    "name": "J",
+    "apartmentNumber": "5",
+    "email": "i@i.se",
+    "phone": "1111",
+    "checkInDate": "2025-03-12",
+    "checkOutDate": "2025-03-16",
+    "guestCount": 1,
+    "message": null,
+    "status": "cancelled",
+    "id": 11,
+    "createdAt": "2025-03-11T19:12:47.340Z"
+  },
+  {
+    "name": "H",
+    "apartmentNumber": "",
+    "email": "j@k.se",
+    "phone": "22",
+    "checkInDate": "2025-04-14",
+    "checkOutDate": "2025-04-17",
+    "guestCount": 1,
+    "message": null,
+    "status": "cancelled",
+    "id": 12,
+    "createdAt": "2025-03-11T19:15:15.285Z"
   }
 ]
