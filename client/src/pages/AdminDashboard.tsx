@@ -8,15 +8,19 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import SectionEditor from "@/components/SectionEditor";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import FileUploader from "@/components/FileUploader";
-import { Trash2, Edit, FileText, ExternalLink, Plus } from "lucide-react";
+import { Trash2, Edit, FileText, ExternalLink, Plus, FileUp, Calendar, LayoutDashboard } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminDashboard() {
   const [currentTab, setCurrentTab] = useState<string>("sections");
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [openUploadDialog, setOpenUploadDialog] = useState(false);
+  const { toast } = useToast();
   
   // Fetch all sections
   const { data: sections, isLoading: loadingSections } = useQuery<Section[]>({
@@ -34,9 +38,17 @@ export default function AdminDashboard() {
       try {
         await apiRequest("DELETE", `/api/documents/${id}`);
         queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+        toast({
+          title: "Dokument raderat",
+          description: "Dokumentet har raderats framgångsrikt",
+        });
       } catch (error) {
         console.error("Error deleting document:", error);
-        alert("Det gick inte att radera dokumentet.");
+        toast({
+          title: "Fel vid radering",
+          description: "Det gick inte att radera dokumentet",
+          variant: "destructive",
+        });
       }
     }
   };
@@ -57,6 +69,12 @@ export default function AdminDashboard() {
     return acc;
   }, {} as Record<string, Document[]>) : {};
   
+  // Handle category selection
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setOpenUploadDialog(true);
+  };
+  
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">Administratörsdashboard</h1>
@@ -65,21 +83,30 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card>
           <CardContent className="flex flex-col items-center justify-center p-6">
-            <p className="text-5xl font-bold text-primary mb-2">{stats.totalSections}</p>
+            <div className="bg-primary/10 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+              <LayoutDashboard className="h-8 w-8 text-primary" />
+            </div>
+            <p className="text-4xl font-bold mb-2">{stats.totalSections}</p>
             <p className="text-sm text-gray-500">Totalt antal sektioner</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardContent className="flex flex-col items-center justify-center p-6">
-            <p className="text-5xl font-bold text-primary mb-2">{stats.totalDocuments}</p>
+            <div className="bg-primary/10 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+              <FileText className="h-8 w-8 text-primary" />
+            </div>
+            <p className="text-4xl font-bold mb-2">{stats.totalDocuments}</p>
             <p className="text-sm text-gray-500">Totalt antal dokument</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardContent className="flex flex-col items-center justify-center p-6">
-            <p className="text-5xl font-bold text-primary mb-2">{stats.categoriesByDocuments}</p>
+            <div className="bg-primary/10 w-14 h-14 rounded-full flex items-center justify-center mb-4">
+              <Calendar className="h-8 w-8 text-primary" />
+            </div>
+            <p className="text-4xl font-bold mb-2">{stats.categoriesByDocuments}</p>
             <p className="text-sm text-gray-500">Dokumentkategorier</p>
           </CardContent>
         </Card>
@@ -108,24 +135,28 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {loadingSections ? (
-                <p>Laddar sektioner...</p>
+                <div className="flex justify-center items-center p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {sections?.map(section => (
                     <div 
                       key={section.id} 
-                      className="border rounded-lg p-4 flex justify-between items-center hover:bg-gray-50"
+                      className="border rounded-lg p-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
                     >
                       <div>
                         <div className="flex items-center">
-                                          <div className="bg-primary/10 w-10 h-10 rounded-full flex items-center justify-center mr-3">
+                          <div className="bg-primary/10 w-10 h-10 rounded-full flex items-center justify-center mr-3">
                             <i className={`fas ${section.icon || 'fa-file-alt'} text-primary`}></i>
                           </div>
-                          <h3 className="text-lg font-medium">{section.title}</h3>
+                          <div>
+                            <h3 className="text-lg font-medium">{section.title}</h3>
+                            <p className="text-sm text-gray-500">
+                              Senast uppdaterad: {new Date(section.updatedAt).toLocaleDateString('sv-SE')}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Senast uppdaterad: {new Date(section.updatedAt).toLocaleDateString('sv-SE')}
-                        </p>
                       </div>
                       <Button
                         variant="outline"
@@ -157,27 +188,30 @@ export default function AdminDashboard() {
                     Ladda upp och hantera dokument för de olika sektionerna.
                   </CardDescription>
                 </div>
-                <Button 
-                  onClick={() => {
-                    // Öppna en enkel dialogruta för att välja kategori
-                    const category = prompt("Ange kategori för dokumentet:", "Allmänt");
-                    if (category) {
-                      // Du kan göra något med kategorin här om du vill
-                      // För enkelhetens skull sätter vi bara kategori-staten
-                      setOpenDialog(false);
-                    }
-                  }}
-                  size="sm"
-                  className="bg-primary text-white"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ladda upp dokument
-                </Button>
+                
+                <Dialog>
+                  <Button
+                    onClick={() => {
+                      const category = prompt("Ange kategorin för dokumentet:", "Allmänt");
+                      if (category && category.trim() !== "") {
+                        // Öppna FileUploader med angiven kategori
+                        handleCategorySelect(category);
+                      }
+                    }}
+                    className="bg-primary text-white"
+                    size="sm"
+                  >
+                    <FileUp className="h-4 w-4 mr-2" />
+                    Ladda upp
+                  </Button>
+                </Dialog>
               </div>
             </CardHeader>
             <CardContent>
               {loadingDocuments ? (
-                <p>Laddar dokument...</p>
+                <div className="flex justify-center items-center p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
+                </div>
               ) : documents && documents.length > 0 ? (
                 <div className="space-y-6">
                   {Object.entries(documentsByCategory).map(([category, docs]) => (
@@ -192,24 +226,24 @@ export default function AdminDashboard() {
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {docs.map(doc => (
-                          <Card key={doc.id}>
+                          <Card key={doc.id} className="overflow-hidden border border-gray-200">
                             <CardContent className="p-4">
-                              <div className="flex justify-between items-start">
-                                <div className="flex items-start space-x-2">
-                                  <FileText className="h-5 w-5 mt-1 text-primary" />
-                                  <div>
-                                    <h4 className="font-medium">{doc.title}</h4>
-                                    {doc.description && (
-                                      <p className="text-sm text-gray-500">{doc.description}</p>
-                                    )}
-                                    <p className="text-xs text-gray-400 mt-1">
-                                      Uppladdad: {new Date(doc.uploadedAt).toLocaleDateString('sv-SE')}
-                                    </p>
-                                  </div>
+                              <div className="flex items-start mb-3">
+                                <div className="bg-primary/10 p-2 rounded mr-3 flex-shrink-0">
+                                  <FileText className="h-5 w-5 text-primary" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-medium truncate">{doc.title}</h4>
+                                  {doc.description && (
+                                    <p className="text-sm text-gray-500 line-clamp-2">{doc.description}</p>
+                                  )}
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    {new Date(doc.uploadedAt).toLocaleDateString('sv-SE')}
+                                  </p>
                                 </div>
                               </div>
                               
-                              <div className="flex mt-4 space-x-2 justify-end">
+                              <div className="flex justify-end space-x-2 pt-2 border-t border-gray-100">
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -221,7 +255,7 @@ export default function AdminDashboard() {
                                     rel="noopener noreferrer"
                                   >
                                     <ExternalLink className="h-4 w-4 mr-1" />
-                                    Öppna
+                                    Visa
                                   </a>
                                 </Button>
                                 <Button
@@ -271,6 +305,26 @@ export default function AdminDashboard() {
           )}
         </DialogContent>
       </Dialog>
+      
+      {/* Upload Dialog */}
+      {openUploadDialog && selectedCategory && (
+        <Dialog open={openUploadDialog} onOpenChange={setOpenUploadDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ladda upp dokument</DialogTitle>
+              <DialogDescription>
+                Välj en fil att ladda upp i kategorin "{selectedCategory}".
+              </DialogDescription>
+            </DialogHeader>
+            <div className="pt-4">
+              <FileUploader 
+                category={selectedCategory} 
+                autoOpen={true} 
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

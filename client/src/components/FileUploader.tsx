@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -16,19 +16,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FileUp } from "lucide-react";
 
 interface FileUploaderProps {
   category?: string;
+  autoOpen?: boolean;
 }
 
-export default function FileUploader({ category }: FileUploaderProps) {
+export default function FileUploader({ category, autoOpen = false }: FileUploaderProps) {
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(autoOpen);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(category || "");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Om category ändras, uppdatera selectedCategory
+  useEffect(() => {
+    if (category) {
+      setSelectedCategory(category);
+    }
+  }, [category]);
   
   const resetForm = () => {
     setTitle("");
@@ -159,25 +168,35 @@ export default function FileUploader({ category }: FileUploaderProps) {
           
           <div className="grid w-full items-center gap-1.5">
             <Label htmlFor="document-category">Kategori</Label>
-            <Select 
-              value={selectedCategory} 
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger id="document-category">
-                <SelectValue placeholder="Välj en kategori" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="aktivitetsrum">Aktivitetsrum</SelectItem>
-                <SelectItem value="elbil">Elbil</SelectItem>
-                <SelectItem value="ellagarden">Ellagården</SelectItem>
-                <SelectItem value="stamma">Stämma</SelectItem>
-                <SelectItem value="grillregler">Grillregler</SelectItem>
-                <SelectItem value="gastlagenhet">Gästlägenhet</SelectItem>
-                <SelectItem value="fargkoder">Färgkoder</SelectItem>
-                <SelectItem value="sophantering">Sophantering</SelectItem>
-                <SelectItem value="styrelse">Styrelse</SelectItem>
-              </SelectContent>
-            </Select>
+            {category ? (
+              // Om en kategori har skickats med i props, visa den som ett statiskt fält
+              <div className="flex items-center border rounded p-2">
+                <span className="text-sm text-gray-700">{category}</span>
+              </div>
+            ) : (
+              // Annars visa dropdown för att välja kategori
+              <Select 
+                value={selectedCategory} 
+                onValueChange={setSelectedCategory}
+              >
+                <SelectTrigger id="document-category">
+                  <SelectValue placeholder="Välj en kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Aktivitetsrum">Aktivitetsrum</SelectItem>
+                  <SelectItem value="Elbil">Elbil</SelectItem>
+                  <SelectItem value="Ellagården">Ellagården</SelectItem>
+                  <SelectItem value="Stämma">Stämma</SelectItem>
+                  <SelectItem value="Grillregler">Grillregler</SelectItem>
+                  <SelectItem value="Gästlägenhet">Gästlägenhet</SelectItem>
+                  <SelectItem value="Färgkoder">Färgkoder</SelectItem>
+                  <SelectItem value="Sophantering">Sophantering</SelectItem>
+                  <SelectItem value="Styrelse">Styrelse</SelectItem>
+                  <SelectItem value="Allmänt">Allmänt</SelectItem>
+                  <SelectItem value="Annat">Annat</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
           
           <div className="grid w-full items-center gap-1.5">
