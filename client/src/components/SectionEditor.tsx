@@ -157,10 +157,10 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
         <h2 className="text-xl font-semibold mb-4">Redigera sektion</h2>
         
         <Tabs defaultValue="content" className="mb-4">
-          <TabsList>
-            <TabsTrigger value="content">Innehåll</TabsTrigger>
-            <TabsTrigger value="metadata">Sektionsinfo</TabsTrigger>
-            {isGuestApartment && <TabsTrigger value="info">Informationsruta</TabsTrigger>}
+          <TabsList className="w-full flex overflow-x-auto md:w-auto">
+            <TabsTrigger value="content" className="mobile-touch-target">Innehåll</TabsTrigger>
+            <TabsTrigger value="metadata" className="mobile-touch-target">Sektionsinfo</TabsTrigger>
+            {isGuestApartment && <TabsTrigger value="info" className="mobile-touch-target">Informationsruta</TabsTrigger>}
           </TabsList>
           
           {/* Content Tab */}
@@ -169,7 +169,7 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={10}
-              className="w-full mb-4"
+              className="w-full mb-4 min-h-[150px] md:min-h-[200px]"
               placeholder="Skriv innehållet här..."
             />
           </TabsContent>
@@ -178,36 +178,54 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
           <TabsContent value="metadata">
             <div className="space-y-4 py-2">
               <div className="space-y-2">
-                <Label htmlFor="title">Titel</Label>
+                <Label htmlFor="title" className="text-sm font-medium">Titel</Label>
                 <Input 
                   id="title" 
                   value={title} 
                   onChange={handleTitleChange}
                   placeholder="T.ex. Regler för tvättstugan"
+                  className="mobile-touch-target"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="slug">URL-namn</Label>
+                <Label htmlFor="slug" className="text-sm font-medium">URL-namn</Label>
                 <Input 
                   id="slug" 
                   value={slug} 
                   onChange={(e) => setSlug(e.target.value)}
                   placeholder="t-ex-regler-for-tvattstugan"
+                  className="mobile-touch-target"
                 />
                 <p className="text-xs text-gray-500">URL-namnet genereras automatiskt från titeln men kan redigeras manuellt</p>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="icon">Ikon (Font Awesome-kod)</Label>
+                <Label htmlFor="icon" className="text-sm font-medium">Ikon (Font Awesome-kod)</Label>
                 <Input 
                   id="icon" 
                   value={icon} 
                   onChange={(e) => setIcon(e.target.value)}
                   placeholder="fa-file-alt"
+                  className="mobile-touch-target"
                 />
-                <p className="text-xs text-gray-500">
-                  Använd Font Awesome-ikon kod, t.ex. fa-home, fa-car, fa-building
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {["fa-home", "fa-car", "fa-building", "fa-file-alt", "fa-book"].map(iconOption => (
+                    <Button 
+                      key={iconOption}
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      className="text-xs p-2"
+                      onClick={() => setIcon(iconOption)}
+                    >
+                      <i className={`fas ${iconOption} mr-1`}></i>
+                      {iconOption}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Välj en ikon ovan eller skriv in en Font Awesome-ikon kod
                 </p>
               </div>
             </div>
@@ -223,9 +241,11 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
                     onClick={addInfoItem}
                     size="sm"
                     type="button"
+                    className="mobile-touch-target"
                   >
-                    <i className="fas fa-plus mr-2"></i>
-                    Lägg till rad
+                    <i className="fas fa-plus mr-1"></i>
+                    <span className="hidden sm:inline mr-1">Lägg till rad</span>
+                    <span className="sm:hidden">Lägg till</span>
                   </Button>
                 </div>
                 
@@ -234,13 +254,15 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
                     <Input
                       value={item}
                       onChange={(e) => handleInfoChange(index, e.target.value)}
-                      className="flex-1"
+                      className="flex-1 mobile-touch-target"
                     />
                     <Button 
                       onClick={() => removeInfoItem(index)}
                       size="sm"
                       variant="destructive"
                       type="button"
+                      className="mobile-touch-target"
+                      aria-label="Ta bort"
                     >
                       <i className="fas fa-trash"></i>
                     </Button>
@@ -248,8 +270,8 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
                 ))}
                 
                 {info.length === 0 && (
-                  <p className="text-gray-500 italic">
-                    Inga informationsrutor. Klicka på "Lägg till rad" för att lägga till information.
+                  <p className="text-gray-500 italic text-sm">
+                    Inga informationsrutor. Klicka på "Lägg till" för att lägga till information.
                   </p>
                 )}
               </div>
@@ -257,21 +279,33 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
           )}
         </Tabs>
         
-        <div className="flex space-x-3">
+        <div className="flex flex-col sm:flex-row gap-3 sm:space-x-3">
           <Button 
             onClick={handleSave}
-            className="bg-primary hover:bg-primary/90 text-white"
+            className="bg-primary hover:bg-primary/90 text-white mobile-touch-target"
             disabled={updateMutation.isPending}
           >
-            {updateMutation.isPending ? "Sparar..." : "Spara ändringar"}
+            {updateMutation.isPending ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                <span>Sparar...</span>
+              </>
+            ) : (
+              <>
+                <i className="fas fa-save mr-2"></i>
+                <span>Spara ändringar</span>
+              </>
+            )}
           </Button>
           
           <Button 
             variant="outline"
             onClick={onCancel}
             disabled={updateMutation.isPending}
+            className="mobile-touch-target"
           >
-            Avbryt
+            <i className="fas fa-times mr-2"></i>
+            <span>Avbryt</span>
           </Button>
         </div>
       </CardContent>
