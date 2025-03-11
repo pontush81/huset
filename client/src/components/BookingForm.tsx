@@ -114,23 +114,34 @@ export default function BookingForm() {
   const handleDateSelect = (date: Date) => {
     // If no dates selected yet or both dates selected, start fresh with check-in
     if (!selectedDates.checkIn || (selectedDates.checkIn && selectedDates.checkOut)) {
+      // Start a new selection with check-in date
       setSelectedDates({
         checkIn: date,
         checkOut: null,
       });
       // Format the date as a string for the form
       form.setValue("checkInDate", format(date, 'yyyy-MM-dd'));
+      form.setValue("checkOutDate", ""); // Clear checkout date
     } 
     // If only check-in selected, set check-out
     else if (selectedDates.checkIn && !selectedDates.checkOut) {
       // Ensure check-out is after check-in
       if (date > selectedDates.checkIn) {
+        // Set check-out date
         setSelectedDates({
           ...selectedDates,
           checkOut: date,
         });
         // Format the date as a string for the form
         form.setValue("checkOutDate", format(date, 'yyyy-MM-dd'));
+      } else if (isSameDay(date, selectedDates.checkIn)) {
+        // If clicking same date, require at least 1 day stay
+        const nextDay = addDays(date, 1);
+        setSelectedDates({
+          checkIn: date,
+          checkOut: nextDay,
+        });
+        form.setValue("checkOutDate", format(nextDay, 'yyyy-MM-dd'));
       } else {
         // If selected date is before check-in, swap them
         setSelectedDates({

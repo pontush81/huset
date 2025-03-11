@@ -74,7 +74,7 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
     });
   };
 
-  // Check if date is one of the selected dates (for highlighting)
+  // Check if date is one of the selected dates (for highlighting check-in and check-out dates)
   const isSelectedDate = (date: Date) => {
     if (!selectedDates) return false;
     
@@ -84,10 +84,14 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
     );
   };
 
-  // Check if date is between selected dates (for highlighting range)
+  // Check if date is between selected dates (for highlighting the entire range)
   const isInSelectedRange = (date: Date) => {
-    if (!selectedDates || !selectedDates.checkIn || !selectedDates.checkOut) return false;
+    if (!selectedDates || !selectedDates.checkIn) return false;
     
+    // If only check-in is selected, don't highlight any range
+    if (!selectedDates.checkOut) return false;
+    
+    // Now highlight all dates between check-in and check-out (not inclusive of endpoints)
     return (
       isAfter(date, selectedDates.checkIn) && 
       isBefore(date, selectedDates.checkOut)
@@ -104,7 +108,7 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
     const isInRange = isInSelectedRange(day);
     
     // Style classes based on state
-    let dayClass = "w-full h-full p-2 flex items-center justify-center";
+    let dayClass = "w-full h-full p-2 flex items-center justify-center relative";
     
     if (!isCurrentMonth) {
       dayClass += " text-gray-400";
@@ -114,21 +118,66 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
       dayClass += " font-bold";
     }
     
+    // Calculate range and edge cases
+    let dayStyles = {};
+    let rangeClass = '';
+    
     if (isBooked) {
+      // Booked dates always get red background
       dayClass += " bg-red-100";
     } else if (isSelected) {
-      dayClass += " bg-accent/60 text-white";
+      // Selected dates (check-in/check-out) get accent highlight
+      dayClass += " bg-primary text-white font-medium z-10";
+      
+      // Add indicator text for check-in/check-out
+      if (selectedDates?.checkIn && isSameDay(day, selectedDates.checkIn)) {
+        dayStyles = { 
+          ...dayStyles,
+          boxShadow: "inset 2px 0 0 #fff, inset -2px 0 0 #fff, inset 0 2px 0 #fff, inset 0 -2px 0 #fff"
+        };
+      } else if (selectedDates?.checkOut && isSameDay(day, selectedDates.checkOut)) {
+        dayStyles = { 
+          ...dayStyles,
+          boxShadow: "inset 2px 0 0 #fff, inset -2px 0 0 #fff, inset 0 2px 0 #fff, inset 0 -2px 0 #fff"
+        };
+      }
     } else if (isInRange) {
-      dayClass += " bg-accent/20";
+      // Dates in the range get lighter accent background
+      dayClass += " bg-primary/20";
+      
+      // Add horizontal connector if in a date range
+      if (selectedDates?.checkIn && selectedDates?.checkOut) {
+        const isFirstDay = isSameDay(day, addDays(selectedDates.checkIn, 1));
+        const isLastDay = isSameDay(day, addDays(selectedDates.checkOut, -1));
+        
+        if (isFirstDay) {
+          rangeClass = "before:absolute before:left-0 before:w-1/2 before:h-full before:bg-primary/20";
+        } else if (isLastDay) {
+          rangeClass = "after:absolute after:right-0 after:w-1/2 after:h-full after:bg-primary/20";
+        } else {
+          rangeClass = "before:absolute before:left-0 before:w-full before:h-full before:bg-primary/20";
+        }
+      }
     }
     
     return (
       <button 
-        className={dayClass}
+        className={`${dayClass} ${rangeClass}`}
+        style={dayStyles}
         onClick={() => onDateSelect && !isBooked && onDateSelect(day)}
         disabled={isBooked || isBefore(day, new Date())}
       >
         {dayNumber}
+        {selectedDates?.checkIn && isSameDay(day, selectedDates.checkIn) && (
+          <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-[8px] font-medium text-primary-foreground">
+            In
+          </span>
+        )}
+        {selectedDates?.checkOut && isSameDay(day, selectedDates.checkOut) && (
+          <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-[8px] font-medium text-primary-foreground">
+            Ut
+          </span>
+        )}
       </button>
     );
   };
