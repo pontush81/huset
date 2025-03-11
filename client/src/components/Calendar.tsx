@@ -195,13 +195,8 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
         };
       }
     } else if (isInRange) {
-      // Dates in the range use a uniform background color with improved contrast
-      dayClass += " bg-primary/20";
-      dayStyles = {
-        ...dayStyles,
-        backgroundColor: "rgba(var(--primary), 0.2)",
-        background: "rgba(var(--primary), 0.2)"
-      };
+      // Dates in the range use a uniform background color
+      rangeClass = "bg-blue-100";
     }
     
     return (
@@ -300,6 +295,7 @@ export default function Calendar({ onDateSelect, selectedDates }: CalendarProps)
             id="show-weeks"
             checked={showWeekNumbers}
             onCheckedChange={setShowWeekNumbers}
+            className="data-[state=checked]:bg-primary"
           />
         </div>
       </div>
