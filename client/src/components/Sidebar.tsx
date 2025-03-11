@@ -11,7 +11,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   const { data: sections, isLoading } = useQuery<Section[]>({
     queryKey: ['/api/sections'],
@@ -76,7 +76,7 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                     <li className="mb-1">
                       <Link href="/admin/bokningar" 
                         className={`block py-2 px-3 rounded ${
-                          currentSection === "admin/bokningar" 
+                          location.includes("/admin/bokningar") 
                             ? 'bg-secondary font-medium' 
                             : 'hover:bg-secondary'
                         } transition-colors duration-200 nav-link`}

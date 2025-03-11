@@ -2,11 +2,15 @@ import BookingManager from "@/components/BookingManager";
 
 export default function ManageBookings() {
   return (
-    <div className="container mx-auto py-6">
-      <h1 className="text-3xl font-bold mb-6">Hantera bokningar</h1>
-      <div className="bg-white p-6 rounded-lg shadow">
-        <BookingManager />
+    <div className="space-y-8">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold mb-2">Bokningsadministration</h2>
+        <p className="text-gray-600">
+          Här kan du hantera, bekräfta, avboka och exportera bokningar för gästlägenheten.
+        </p>
       </div>
+      
+      <BookingManager />
     </div>
   );
 }
