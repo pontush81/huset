@@ -57,6 +57,40 @@ export default function Layout({ children }: LayoutProps) {
     } else {
       setCurrentSection("hem");
     }
+    
+    // Set up intersection observer to update current section while scrolling
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            if (id) {
+              setCurrentSection(id);
+              // Update URL hash without full page reload
+              history.replaceState(null, "", `/#${id}`);
+            }
+          }
+        });
+      },
+      { 
+        threshold: 0.2, // Element is considered visible when 20% visible
+        rootMargin: "-10% 0px -70% 0px" // Adjust trigger area (top, right, bottom, left)
+      }
+    );
+    
+    // Add a small delay to ensure sections are rendered before observing
+    setTimeout(() => {
+      // Observe all section elements
+      document.querySelectorAll('section[id]').forEach((section) => {
+        observer.observe(section);
+      });
+    }, 500);
+    
+    return () => {
+      document.querySelectorAll('section[id]').forEach((section) => {
+        observer.unobserve(section);
+      });
+    };
   }, [location]);
 
   // Fetch sections for breadcrumbs and footer

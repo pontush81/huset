@@ -154,5 +154,18 @@
     "status": "cancelled",
     "id": 12,
     "createdAt": "2025-03-11T19:15:15.285Z"
+  },
+  {
+    "name": "H",
+    "apartmentNumber": "6",
+    "email": "y@y.se",
+    "phone": "222",
+    "checkInDate": "2025-04-14",
+    "checkOutDate": "2025-04-15",
+    "guestCount": 1,
+    "message": null,
+    "status": "confirmed",
+    "id": 13,
+    "createdAt": "2025-03-11T19:44:03.861Z"
   }
 ]

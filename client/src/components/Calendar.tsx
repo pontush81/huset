@@ -28,6 +28,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 interface CalendarProps {
   onDateSelect?: (date: Date) => void;
   selectedDates?: { checkIn: Date | null; checkOut: Date | null };
+  currentMonth?: Date;
+  onMonthChange?: (month: Date) => void;
 }
 
 interface BookingDate {
@@ -37,9 +39,12 @@ interface BookingDate {
   status: string;
 }
 
-export default function Calendar({ onDateSelect, selectedDates }: CalendarProps) {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+export default function Calendar({ onDateSelect, selectedDates, currentMonth: propMonth, onMonthChange }: CalendarProps) {
+  const [localMonth, setLocalMonth] = useState(new Date());
   const [showWeekNumbers, setShowWeekNumbers] = useState<boolean>(true);
+  
+  // Use prop month if provided, otherwise use local state
+  const currentMonth = propMonth || localMonth;
   
   // Calculate calendar range (current month + some days from previous/next month)
   const monthStart = startOfMonth(currentMonth);

@@ -66,7 +66,7 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
         style={{backgroundColor: "#ffffff", background: "#ffffff", color: "#333"}}
         className={`w-64 bg-white fixed h-full left-0 top-0 transform border-r shadow-md
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          md:translate-x-0 transition-transform duration-300 z-30 overflow-y-auto pt-14 md:pt-16`}
+          md:translate-x-0 transition-transform duration-300 z-30 overflow-y-auto pt-16`}
       >
         <div className="p-3 md:p-4 bg-white">
           <div className="mb-4 md:mb-6 bg-white">
