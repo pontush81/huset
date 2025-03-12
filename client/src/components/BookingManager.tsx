@@ -240,6 +240,14 @@ export default function BookingManager() {
               Bekräftade ({confirmedBookings.length})
             </Button>
             <Button 
+              variant={filter === 'pending' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setFilter('pending')}
+              className={filter === 'pending' ? 'bg-yellow-500 hover:bg-yellow-600' : 'text-yellow-500'}
+            >
+              Väntar ({pendingBookings.length})
+            </Button>
+            <Button 
               variant={filter === 'cancelled' ? 'default' : 'outline'} 
               size="sm"
               onClick={() => setFilter('cancelled')}

@@ -2,14 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import { format, parseISO, startOfMonth, endOfMonth } from "date-fns";
 import { sv } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CalendarCheck } from "lucide-react";
 
 interface BookingDate {
   id: number;
   checkInDate: string;
   checkOutDate: string;
   status: string;
+  name: string;
+  apartmentNumber: string;
 }
 
 interface MonthBookingsProps {
@@ -35,60 +37,62 @@ export default function MonthBookings({ currentMonth: propMonth }: MonthBookings
       id: booking.id,
       checkInFormatted: format(checkIn, 'd MMMM', { locale: sv }),
       checkOutFormatted: format(checkOut, 'd MMMM', { locale: sv }),
-      status: booking.status
+      status: booking.status,
+      name: booking.name,
+      apartmentNumber: booking.apartmentNumber
     };
   };
   
   if (isLoading) {
     return (
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-xl">Bokningar denna månad</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="mt-4">
+        <div className="space-y-3">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      </div>
     );
   }
   
-  // Only show confirmed bookings
-  const confirmedBookings = bookings?.filter(booking => booking.status === 'confirmed') || [];
+  // Only show confirmed and pending bookings (filter out cancelled)
+  const activeBookings = bookings?.filter(booking => booking.status !== 'cancelled') || [];
   
   return (
-    <Card className="mt-6">
-      <CardHeader>
-        <CardTitle className="text-xl">
-          Bokningar {format(currentMonth, 'MMMM yyyy', { locale: sv })}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {confirmedBookings.length === 0 ? (
-          <p className="text-gray-500 italic text-center py-4">
-            Inga bokningar denna månad
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {confirmedBookings.map(booking => {
-              const formatted = formatBooking(booking);
-              return (
-                <div key={booking.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                  <div>
-                    <p className="font-medium">{formatted.checkInFormatted} → {formatted.checkOutFormatted}</p>
-                  </div>
-                  <Badge variant="outline" className="bg-primary text-white">
-                    Bokad
-                  </Badge>
+    <div className="mt-4">
+      {activeBookings.length === 0 ? (
+        <div className="text-center py-8 bg-gray-50 rounded-lg">
+          <CalendarCheck className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+          <p className="text-gray-500">Inga aktiva bokningar denna månad</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {activeBookings.map(booking => {
+            const formatted = formatBooking(booking);
+            return (
+              <div key={booking.id} className="flex justify-between items-center p-4 bg-white border border-gray-100 shadow-sm rounded-md hover:border-gray-200 transition-colors">
+                <div>
+                  <p className="font-medium">
+                    {formatted.checkInFormatted} → {formatted.checkOutFormatted}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {formatted.name} {formatted.apartmentNumber && `· Lägenhet ${formatted.apartmentNumber}`}
+                  </p>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                <Badge 
+                  className={
+                    booking.status === 'confirmed' 
+                      ? "bg-green-500" 
+                      : "bg-yellow-500"
+                  }
+                >
+                  {booking.status === 'confirmed' ? 'Bekräftad' : 'Väntar'}
+                </Badge>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
