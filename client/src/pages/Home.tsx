@@ -126,8 +126,8 @@ export default function Home() {
                 <Button 
                   className="w-full justify-center py-6 text-lg"
                   onClick={() => {
-                    // Använd Link från wouter istället för att modifiera fönstret direkt
-                    window.location.href = '/gastlagenhet#bookingForm';
+                    // Använd vår speciella bokningsrutt
+                    window.location.href = '/gastlagenhet/boka';
                   }}
                 >
                   Gå till bokningsformuläret

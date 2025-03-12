@@ -11,7 +11,11 @@ import DocumentList from "@/components/DocumentList";
 import MonthBookings from "@/components/MonthBookings";
 import Calendar from "@/components/Calendar";
 
-export default function GuestApartment() {
+interface GuestApartmentProps {
+  showBookingForm?: boolean;
+}
+
+export default function GuestApartment({ showBookingForm = false }: GuestApartmentProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [infoItems, setInfoItems] = useState<string[]>([]);
   const [mainContent, setMainContent] = useState("");
@@ -45,9 +49,10 @@ export default function GuestApartment() {
   }, [section]);
   
   // Hantera scrollning till bokningsformuläret om vi har en hash i URL:en
+  // eller om showBookingForm är sant
   useEffect(() => {
-    // Kolla om vi har en hash som är #bookingForm
-    if (window.location.hash === '#bookingForm') {
+    // Kolla om vi har en hash som är #bookingForm eller om showBookingForm är sant
+    if (window.location.hash === '#bookingForm' || showBookingForm) {
       // Hitta bokningsformuläret
       setTimeout(() => {
         const bookingForm = document.getElementById('bookingForm');
@@ -56,7 +61,7 @@ export default function GuestApartment() {
         }
       }, 500); // Lite fördröjning för att säkerställa att allt har renderats
     }
-  }, []);
+  }, [showBookingForm]);
 
   if (isLoading) {
     return (

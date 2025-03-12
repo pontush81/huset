@@ -14,7 +14,12 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Home} />
-        <Route path="/gastlagenhet" component={GuestApartment} />
+        <Route path="/gastlagenhet">
+          {(params) => <GuestApartment />}
+        </Route>
+        <Route path="/gastlagenhet/boka">
+          {(params) => <GuestApartment showBookingForm={true} />}
+        </Route>
         <Route path="/admin/bokningar" component={ManageBookings} />
         <Route path="/admin/dashboard" component={AdminDashboard} />
         <Route path="/#:section" component={Home} />
