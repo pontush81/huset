@@ -24,7 +24,7 @@ export default function BookingManager() {
   const [showCancelDialog, setShowCancelDialog] = useState<boolean>(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
-  const [filter, setFilter] = useState<string>("all"); // Nytt tillstånd för filtrering
+  const [filter, setFilter] = useState<string>("active"); // Filtrera på aktiva bokningar som standard
 
   // Fetch all bookings
   const { data: bookings, isLoading } = useQuery<Booking[]>({
@@ -134,6 +134,7 @@ export default function BookingManager() {
   const pendingBookings = bookings?.filter(booking => booking.status === 'pending') || [];
   const confirmedBookings = bookings?.filter(booking => booking.status === 'confirmed') || [];
   const cancelledBookings = bookings?.filter(booking => booking.status === 'cancelled') || [];
+  const activeBookings = bookings?.filter(booking => booking.status !== 'cancelled') || [];
 
   // Get status badge style
   const getStatusBadge = (status: string) => {
@@ -225,11 +226,12 @@ export default function BookingManager() {
           <h3 className="text-xl font-semibold mb-2">Hantera bokningar</h3>
           <div className="flex flex-wrap gap-2">
             <Button 
-              variant={filter === 'all' ? 'default' : 'outline'} 
+              variant={filter === 'active' ? 'default' : 'outline'} 
               size="sm"
-              onClick={() => setFilter('all')}
+              onClick={() => setFilter('active')}
+              className={filter === 'active' ? 'bg-primary hover:bg-primary/90' : ''}
             >
-              Alla ({bookings?.length || 0})
+              Aktiva ({activeBookings.length})
             </Button>
             <Button 
               variant={filter === 'confirmed' ? 'default' : 'outline'} 
@@ -277,7 +279,7 @@ export default function BookingManager() {
         <div className="space-y-4">
           {bookings
             ?.filter(booking => {
-              if (filter === 'all') return true;
+              if (filter === 'active') return booking.status !== 'cancelled';
               return booking.status === filter;
             })
             .map(renderBookingCard)}
