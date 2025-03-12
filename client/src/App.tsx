@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Layout from "@/components/Layout";
 import Home from "@/pages/Home";
 import GuestApartment from "@/pages/GuestApartment";
+import BookingPage from "@/pages/BookingPage";
 import ManageBookings from "@/pages/ManageBookings";
 import AdminDashboard from "@/pages/AdminDashboard";
 
@@ -14,12 +15,8 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Home} />
-        <Route path="/gastlagenhet">
-          {(params) => <GuestApartment />}
-        </Route>
-        <Route path="/gastlagenhet/boka">
-          {(params) => <GuestApartment showBookingForm={true} />}
-        </Route>
+        <Route path="/gastlagenhet" component={GuestApartment} />
+        <Route path="/gastlagenhet/boka" component={BookingPage} />
         <Route path="/admin/bokningar" component={ManageBookings} />
         <Route path="/admin/dashboard" component={AdminDashboard} />
         <Route path="/#:section" component={Home} />
