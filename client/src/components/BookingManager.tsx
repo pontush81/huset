@@ -252,13 +252,29 @@ export default function BookingManager() {
           </div>
         </div>
         
-        <Button 
-          onClick={handleExport}
-          disabled={exportMutation.isPending || !bookings?.length}
-          className="bg-primary hover:bg-primary/90"
-        >
-          {exportMutation.isPending ? "Exporterar..." : "Exportera bokningar"}
-        </Button>
+        <div className="flex flex-col gap-2 md:flex-row">
+          <Button 
+            onClick={handleExport}
+            disabled={exportMutation.isPending || !bookings?.length}
+            className="bg-primary hover:bg-primary/90"
+          >
+            {exportMutation.isPending ? "Exporterar..." : "Exportera bokningar"}
+          </Button>
+          
+          <Button 
+            variant="outline"
+            onClick={() => {
+              // Scrolla först till toppen av sidan innan navigering
+              window.scrollTo({ top: 0, behavior: 'instant' });
+              // Använd sedan en timeout innan navigation för att säkerställa att scrollningen hinner utföras
+              setTimeout(() => {
+                window.location.href = "/gastlagenhet/boka";
+              }, 10);
+            }}
+          >
+            Gå till bokningssidan
+          </Button>
+        </div>
       </div>
       
       {isLoading ? (

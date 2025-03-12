@@ -175,10 +175,10 @@ export default function GuestApartment({ showBookingForm = false, params }: Gues
             <div id="bookingForm" className="mt-6 scroll-mt-20">
               <h3 className="text-xl font-semibold mb-4">Boka gästlägenheten</h3>
               <BookingForm />
-              <div className="mt-6 text-center">
+              <div className="mt-6 text-center space-y-4">
                 <a 
                   href="#gastlagenhet" 
-                  className="text-primary hover:underline font-medium"
+                  className="text-primary hover:underline font-medium block"
                   onClick={(e) => {
                     e.preventDefault();
                     document.getElementById('gastlagenhet')?.scrollIntoView({
@@ -189,6 +189,22 @@ export default function GuestApartment({ showBookingForm = false, params }: Gues
                 >
                   ↑ Tillbaka till gästlägenhetsinformation
                 </a>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => {
+                    // Scrolla först till toppen av sidan innan navigering
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                    // Använd sedan en timeout innan navigation för att säkerställa att scrollningen hinner utföras
+                    setTimeout(() => {
+                      window.location.href = "/admin/bokningar";
+                    }, 10);
+                  }}
+                >
+                  Gå till bokningsadministration
+                </Button>
               </div>
             </div>
             

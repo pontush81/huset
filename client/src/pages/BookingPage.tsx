@@ -43,7 +43,7 @@ export default function BookingPage() {
               <h2 className="text-xl font-semibold mb-4">Dokument och information</h2>
               <DocumentList category="gastlagenhet" limit={3} />
               
-              <div className="mt-4 pt-4 border-t border-border">
+              <div className="mt-4 pt-4 border-t border-border space-y-4">
                 <h3 className="font-medium mb-2">Mer information</h3>
                 <Button 
                   variant="outline" 
@@ -58,6 +58,21 @@ export default function BookingPage() {
                   }}
                 >
                   Läs mer om gästlägenheten
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-2"
+                  onClick={() => {
+                    // Scrolla först till toppen av sidan innan navigering
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                    // Använd sedan en timeout innan navigation för att säkerställa att scrollningen hinner utföras
+                    setTimeout(() => {
+                      window.location.href = "/admin/bokningar";
+                    }, 10);
+                  }}
+                >
+                  Gå till bokningsadministration
                 </Button>
               </div>
             </CardContent>
