@@ -390,7 +390,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: booking.id,
           checkInDate: booking.checkInDate,
           checkOutDate: booking.checkOutDate,
-          status: booking.status
+          status: booking.status,
+          name: booking.name,
+          apartmentNumber: booking.apartmentNumber
         }));
       
       res.json(calendarBookings);
