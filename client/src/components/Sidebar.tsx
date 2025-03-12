@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Section } from "@shared/schema";
@@ -13,10 +13,51 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
   const [location, setLocation] = useLocation();
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
 
   const { data: sections, isLoading } = useQuery<Section[]>({
     queryKey: ['/api/sections'],
   });
+  
+  // Set header height and handle sidebar scroll positioning
+  useEffect(() => {
+    const header = document.querySelector('header');
+    if (header) {
+      setHeaderHeight(header.clientHeight);
+    }
+    
+    const handleScroll = () => {
+      if (!sidebarRef.current) return;
+      
+      const scrollY = window.scrollY;
+      
+      // On mobile, don't apply sticky behavior
+      if (window.innerWidth < 768) return;
+      
+      if (scrollY > 0) {
+        // Apply sticky behavior on desktop when scrolled
+        const newTop = Math.max(0, headerHeight - scrollY);
+        sidebarRef.current.style.top = `${newTop}px`;
+      } else {
+        // Reset positioning when at the top
+        sidebarRef.current.style.top = `${headerHeight}px`;
+      }
+    };
+    
+    // Initial positioning
+    handleScroll();
+    
+    // Add scroll event listener
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [headerHeight]);
 
   // Handle navigation with smooth scrolling to section
   const handleNavClick = (slug: string) => {
@@ -62,21 +103,16 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
       )}
       
       <aside 
+        ref={sidebarRef}
         id="sidebar" 
         style={{
           backgroundColor: "#ffffff", 
           background: "#ffffff", 
-          color: "#333",
-          position: "sticky",
-          top: "0",
-          height: "100vh",
-          overflowY: "auto"
+          color: "#333"
         }}
-        className={`w-64 bg-white border-r shadow-md
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
-          fixed md:sticky left-0 top-0 md:top-0 
-          transform transition-transform duration-300 z-30 
-          pt-16`}
+        className={`w-64 bg-white fixed h-full left-0 transform border-r shadow-md
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+          md:translate-x-0 transition-transform duration-300 z-30 overflow-y-auto pt-16`}
       >
         <div className="p-3 md:p-4 bg-white">
           <div className="mb-4 md:mb-6 bg-white">

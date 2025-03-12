@@ -147,15 +147,8 @@ export default function Layout({ children }: LayoutProps) {
       </header>
 
       <div className="flex flex-grow">
-        {/* Sidebar - fixed on mobile, sticky on desktop */}
-        <div className="h-full hidden md:block">
-          <Sidebar isOpen={sidebarOpen} currentSection={currentSection} />
-        </div>
-        
-        {/* Mobile sidebar - always fixed position */}
-        <div className="md:hidden">
-          <Sidebar isOpen={sidebarOpen} currentSection={currentSection} />
-        </div>
+        {/* Sidebar */}
+        <Sidebar isOpen={sidebarOpen} currentSection={currentSection} />
 
         {/* Main Content */}
         <main className="flex-grow md:ml-64 px-3 py-4 md:p-4 w-full overflow-y-auto">
