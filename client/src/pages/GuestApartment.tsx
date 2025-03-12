@@ -43,6 +43,20 @@ export default function GuestApartment() {
       }
     }
   }, [section]);
+  
+  // Hantera scrollning till bokningsformuläret om vi har en hash i URL:en
+  useEffect(() => {
+    // Kolla om vi har en hash som är #bookingForm
+    if (window.location.hash === '#bookingForm') {
+      // Hitta bokningsformuläret
+      setTimeout(() => {
+        const bookingForm = document.getElementById('bookingForm');
+        if (bookingForm) {
+          bookingForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500); // Lite fördröjning för att säkerställa att allt har renderats
+    }
+  }, []);
 
   if (isLoading) {
     return (
@@ -146,7 +160,7 @@ export default function GuestApartment() {
             </div>
             
             {/* Booking form component */}
-            <div className="mt-6">
+            <div id="bookingForm" className="mt-6 scroll-mt-20">
               <h3 className="text-xl font-semibold mb-4">Boka gästlägenheten</h3>
               <BookingForm />
             </div>

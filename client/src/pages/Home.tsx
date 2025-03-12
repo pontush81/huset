@@ -125,7 +125,10 @@ export default function Home() {
                 <h3 className="text-xl font-semibold mb-4">Boka gästlägenheten</h3>
                 <Button 
                   className="w-full justify-center py-6 text-lg"
-                  onClick={() => window.location.href = '/gastlagenhet'}
+                  onClick={() => {
+                    // Använd Link från wouter istället för att modifiera fönstret direkt
+                    window.location.href = '/gastlagenhet#bookingForm';
+                  }}
                 >
                   Gå till bokningsformuläret
                 </Button>
