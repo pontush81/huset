@@ -177,7 +177,9 @@ export default function GuestApartment({ showBookingForm = false, params }: Gues
             </div>
             
             <div className="mb-6">
-              <p className="mb-4">{mainContent}</p>
+              <div className="mb-4 whitespace-pre-line">
+                {formatContent(mainContent)}
+              </div>
               
               {infoItems.length > 0 && (
                 <div className="bg-secondary p-4 rounded-lg mb-4">
@@ -190,7 +192,6 @@ export default function GuestApartment({ showBookingForm = false, params }: Gues
                 </div>
               )}
               
-
             </div>
             
             {/* Document section */}
