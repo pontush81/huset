@@ -231,7 +231,7 @@ export default function BookingManager() {
               onClick={() => setFilter('active')}
               className={filter === 'active' ? 'bg-primary hover:bg-primary/90' : ''}
             >
-              Aktiva ({activeBookings.length})
+              Alla aktiva ({activeBookings.length})
             </Button>
             <Button 
               variant={filter === 'confirmed' ? 'default' : 'outline'} 
@@ -248,14 +248,6 @@ export default function BookingManager() {
               className={filter === 'pending' ? 'bg-yellow-500 hover:bg-yellow-600' : 'text-yellow-500'}
             >
               Väntar ({pendingBookings.length})
-            </Button>
-            <Button 
-              variant={filter === 'cancelled' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setFilter('cancelled')}
-              className={filter === 'cancelled' ? 'bg-red-500 hover:bg-red-600' : 'text-red-500'}
-            >
-              Avbokade ({cancelledBookings.length})
             </Button>
           </div>
         </div>

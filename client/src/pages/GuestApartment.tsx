@@ -50,18 +50,23 @@ export default function GuestApartment({ showBookingForm = false, params }: Gues
     }
   }, [section]);
   
-  // Hantera scrollning till bokningsformuläret om vi har en hash i URL:en
-  // eller om showBookingForm är sant
+  // Hantera scrollning till önskad position när sidan laddas
   useEffect(() => {
-    // Kolla om vi har en hash som är #bookingForm eller om showBookingForm är sant
+    const scrollToTop = () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    
+    // Om vi visar bokningsformuläret, scrolla till det
     if (window.location.hash === '#bookingForm' || showBookingForm) {
-      // Hitta bokningsformuläret
       setTimeout(() => {
         const bookingForm = document.getElementById('bookingForm');
         if (bookingForm) {
           bookingForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, 500); // Lite fördröjning för att säkerställa att allt har renderats
+    } else {
+      // Annars scrolla till toppen
+      scrollToTop();
     }
   }, [showBookingForm]);
 
@@ -170,6 +175,21 @@ export default function GuestApartment({ showBookingForm = false, params }: Gues
             <div id="bookingForm" className="mt-6 scroll-mt-20">
               <h3 className="text-xl font-semibold mb-4">Boka gästlägenheten</h3>
               <BookingForm />
+              <div className="mt-6 text-center">
+                <a 
+                  href="#gastlagenhet" 
+                  className="text-primary hover:underline font-medium"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('gastlagenhet')?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'start'
+                    });
+                  }}
+                >
+                  ↑ Tillbaka till gästlägenhetsinformation
+                </a>
+              </div>
             </div>
             
             {/* Monthly bookings display */}
