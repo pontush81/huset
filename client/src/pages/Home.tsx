@@ -124,15 +124,13 @@ export default function Home() {
               {/* Special booking form for guest apartment */}
               <div className="border-t pt-6">
                 <h3 className="text-xl font-semibold mb-4">Boka gästlägenheten</h3>
-                <Button 
-                  className="w-full justify-center py-6 text-lg"
-                  onClick={() => {
-                    // Använd vår speciella bokningsrutt
-                    window.location.href = '/gastlagenhet/boka';
-                  }}
-                >
-                  Gå till bokningsformuläret
-                </Button>
+                <Link href="/gastlagenhet/boka">
+                  <Button 
+                    className="w-full justify-center py-6 text-lg"
+                  >
+                    Gå till bokningsformuläret
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>

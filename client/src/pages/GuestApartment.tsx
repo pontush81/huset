@@ -11,11 +11,13 @@ import DocumentList from "@/components/DocumentList";
 import MonthBookings from "@/components/MonthBookings";
 import Calendar from "@/components/Calendar";
 
-interface GuestApartmentProps {
+import type { RouteComponentProps } from "wouter";
+
+interface GuestApartmentProps extends RouteComponentProps {
   showBookingForm?: boolean;
 }
 
-export default function GuestApartment({ showBookingForm = false }: GuestApartmentProps) {
+export default function GuestApartment({ showBookingForm = false, params }: GuestApartmentProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [infoItems, setInfoItems] = useState<string[]>([]);
   const [mainContent, setMainContent] = useState("");
