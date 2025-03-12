@@ -124,13 +124,19 @@ export default function Home() {
               {/* Special booking form for guest apartment */}
               <div className="border-t pt-6">
                 <h3 className="text-xl font-semibold mb-4">Boka gästlägenheten</h3>
-                <Link href="/gastlagenhet/boka">
-                  <Button 
-                    className="w-full justify-center py-6 text-lg"
-                  >
-                    Gå till bokningsformuläret
-                  </Button>
-                </Link>
+                <Button 
+                  className="w-full justify-center py-6 text-lg"
+                  onClick={() => {
+                    // Scrolla först till toppen av sidan innan navigering
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                    // Använd sedan en timeout innan navigation för att säkerställa att scrollningen hinner utföras
+                    setTimeout(() => {
+                      window.location.href = "/gastlagenhet/boka";
+                    }, 10);
+                  }}
+                >
+                  Gå till bokningsformuläret
+                </Button>
               </div>
             </CardContent>
           </Card>

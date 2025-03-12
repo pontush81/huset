@@ -45,11 +45,20 @@ export default function BookingPage() {
               
               <div className="mt-4 pt-4 border-t border-border">
                 <h3 className="font-medium mb-2">Mer information</h3>
-                <Link href="/gastlagenhet">
-                  <Button variant="outline" className="w-full">
-                    Läs mer om gästlägenheten
-                  </Button>
-                </Link>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => {
+                    // Scrolla först till toppen av sidan innan navigering
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                    // Använd sedan en timeout innan navigation för att säkerställa att scrollningen hinner utföras
+                    setTimeout(() => {
+                      window.location.href = "/gastlagenhet";
+                    }, 10);
+                  }}
+                >
+                  Läs mer om gästlägenheten
+                </Button>
               </div>
             </CardContent>
           </Card>
