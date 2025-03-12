@@ -1,19 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import BookingForm from "@/components/BookingForm";
-import Calendar from "@/components/Calendar";
 import DocumentList from "@/components/DocumentList";
 import { Section } from "@shared/schema";
 import { ArrowLeft } from "lucide-react";
 
 export default function BookingPage() {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  
   // Fetch guest apartment section content
-  const { data: section, isLoading } = useQuery<Section>({
+  const { data: section } = useQuery<Section>({
     queryKey: ['/api/sections/gastlagenhet'],
   });
   
@@ -41,16 +38,6 @@ export default function BookingPage() {
         </Card>
         
         <div className="order-1 lg:order-2">
-          <Card className="bg-white rounded-lg shadow-md mb-6">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Kalender och tillgänglighet</h2>
-              <Calendar 
-                currentMonth={currentMonth}
-                onMonthChange={(month) => setCurrentMonth(month)}
-              />
-            </CardContent>
-          </Card>
-          
           <Card className="bg-white rounded-lg shadow-md">
             <CardContent className="p-6">
               <h2 className="text-xl font-semibold mb-4">Dokument och information</h2>
