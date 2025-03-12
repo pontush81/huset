@@ -37,6 +37,46 @@ export default function Home() {
     }
   }, [isLoading, sections]);
 
+  // Helper function to format content with special markup
+  const formatContent = (content: string): React.ReactNode => {
+    if (!content) return null;
+    
+    // Process HIGHLIGHT tags
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    
+    // Regular expression to find [HIGHLIGHT]...[/HIGHLIGHT] tags
+    const highlightRegex = /\[HIGHLIGHT\]([\s\S]*?)\[\/HIGHLIGHT\]/g;
+    
+    while ((match = highlightRegex.exec(content)) !== null) {
+      // Add text before the tag
+      if (match.index > lastIndex) {
+        parts.push(<span key={`text-${lastIndex}`}>{content.slice(lastIndex, match.index)}</span>);
+      }
+      
+      // Add the highlighted content
+      const highlightedText = match[1]; // The content between the tags
+      parts.push(
+        <span 
+          key={`highlight-${match.index}`} 
+          className="bg-amber-100 text-amber-900 px-1 rounded"
+        >
+          {highlightedText}
+        </span>
+      );
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add any remaining text after the last match
+    if (lastIndex < content.length) {
+      parts.push(<span key={`text-${lastIndex}`}>{content.slice(lastIndex)}</span>);
+    }
+    
+    return parts.length > 0 ? parts : content;
+  };
+  
   // Helper to get icon class for a section
   const getIconClass = (section?: Section) => {
     if (!section) return "fa-file-alt";
@@ -109,7 +149,7 @@ export default function Home() {
               </div>
               
               <div className="mb-6 whitespace-pre-line">
-                <p>{section.content}</p>
+                {formatContent(section.content)}
               </div>
               
               {/* Document list for this section */}
@@ -169,7 +209,7 @@ export default function Home() {
             </div>
             
             <div className="mb-6 whitespace-pre-line">
-              <p>{section.content}</p>
+              {formatContent(section.content)}
             </div>
             
             {/* Document list for this section */}

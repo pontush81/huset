@@ -166,6 +166,10 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
               <i className="fas fa-cog mr-2 hidden sm:inline"></i>
               <span>Sektionsinfo</span>
             </TabsTrigger>
+            <TabsTrigger value="markup" className="mobile-touch-target flex-1 text-center">
+              <i className="fas fa-code mr-2 hidden sm:inline"></i>
+              <span>Markup</span>
+            </TabsTrigger>
             {isGuestApartment && (
               <TabsTrigger value="info" className="mobile-touch-target flex-1 text-center">
                 <i className="fas fa-info-circle mr-2 hidden sm:inline"></i>
@@ -238,6 +242,182 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
                 <p className="text-xs text-gray-500 mt-2">
                   Välj en ikon ovan eller skriv in en Font Awesome-ikon kod
                 </p>
+              </div>
+            </div>
+          </TabsContent>
+          
+          {/* Markup Helper Tab */}
+          <TabsContent value="markup">
+            <div className="space-y-5 py-2">
+              <h3 className="text-md font-semibold">Formatering av text</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border rounded-md p-3 space-y-2">
+                  <h4 className="text-sm font-medium">Textformatering</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <code className="bg-gray-100 px-1 rounded">**fet text**</code>
+                      <span>→</span>
+                      <span className="font-bold">fet text</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <code className="bg-gray-100 px-1 rounded">*kursiv text*</code>
+                      <span>→</span>
+                      <span className="italic">kursiv text</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <code className="bg-gray-100 px-1 rounded">~~genomstruken~~</code>
+                      <span>→</span>
+                      <span className="line-through">genomstruken</span>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => {
+                      const text = "Detta är **fet text**, *kursiv text* och ~~genomstruken text~~.";
+                      setContent(content + "\n\n" + text);
+                      toast({
+                        title: "Text tillagd",
+                        description: "Exempel på textformatering har lagts till i innehållet.",
+                      });
+                    }}
+                  >
+                    <i className="fas fa-plus-circle mr-1"></i> Lägg till exempel
+                  </Button>
+                </div>
+                
+                <div className="border rounded-md p-3 space-y-2">
+                  <h4 className="text-sm font-medium">Listor</h4>
+                  <div className="space-y-1 text-sm">
+                    <div>
+                      <div>
+                        <code className="bg-gray-100 px-1 rounded">- Punkt ett</code>
+                      </div>
+                      <div>
+                        <code className="bg-gray-100 px-1 rounded">- Punkt två</code>
+                      </div>
+                    </div>
+                    <div>
+                      <div>
+                        <code className="bg-gray-100 px-1 rounded">1. Första</code>
+                      </div>
+                      <div>
+                        <code className="bg-gray-100 px-1 rounded">2. Andra</code>
+                      </div>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => {
+                      const text = "- Punkt ett\n- Punkt två\n- Punkt tre\n\n1. Första punkten\n2. Andra punkten\n3. Tredje punkten";
+                      setContent(content + "\n\n" + text);
+                      toast({
+                        title: "Text tillagd",
+                        description: "Exempel på listor har lagts till i innehållet.",
+                      });
+                    }}
+                  >
+                    <i className="fas fa-plus-circle mr-1"></i> Lägg till exempel
+                  </Button>
+                </div>
+                
+                <div className="border rounded-md p-3 space-y-2">
+                  <h4 className="text-sm font-medium">Rubriker</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <code className="bg-gray-100 px-1 rounded"># Stor rubrik</code>
+                      <span>→</span>
+                      <span className="font-bold text-lg">Stor rubrik</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <code className="bg-gray-100 px-1 rounded">## Mellanstor</code>
+                      <span>→</span>
+                      <span className="font-bold text-base">Mellanstor</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <code className="bg-gray-100 px-1 rounded">### Liten</code>
+                      <span>→</span>
+                      <span className="font-bold text-sm">Liten</span>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => {
+                      const text = "# Stor rubrik\n\nText under den stora rubriken.\n\n## Mellanstor rubrik\n\nMer text under den mellanstora rubriken.\n\n### Liten rubrik\n\nYtterligare text under den lilla rubriken.";
+                      setContent(content + "\n\n" + text);
+                      toast({
+                        title: "Text tillagd",
+                        description: "Exempel på rubriker har lagts till i innehållet.",
+                      });
+                    }}
+                  >
+                    <i className="fas fa-plus-circle mr-1"></i> Lägg till exempel
+                  </Button>
+                </div>
+                
+                <div className="border rounded-md p-3 space-y-2">
+                  <h4 className="text-sm font-medium">Länkar och bilder</h4>
+                  <div className="space-y-1 text-sm">
+                    <div>
+                      <code className="bg-gray-100 px-1 rounded">[text](https://example.com)</code>
+                      <div className="text-xs text-gray-500">Länk till en webbsida</div>
+                    </div>
+                    <div>
+                      <code className="bg-gray-100 px-1 rounded">![alt text](https://example.com/bild.jpg)</code>
+                      <div className="text-xs text-gray-500">Bild (används sällan, ladda istället upp dokumentet)</div>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => {
+                      const text = "Här är en [länk till vår förenings hemsida](https://exempel.se).";
+                      setContent(content + "\n\n" + text);
+                      toast({
+                        title: "Text tillagd",
+                        description: "Exempel på länkar har lagts till i innehållet.",
+                      });
+                    }}
+                  >
+                    <i className="fas fa-plus-circle mr-1"></i> Lägg till exempel
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="border rounded-md p-3 space-y-2">
+                <h4 className="text-sm font-medium">Specialformat för innehåll</h4>
+                <div className="space-y-1 text-sm">
+                  <div>
+                    <code className="bg-gray-100 px-1 rounded">[INFO_BOX] Information i ruta [/INFO_BOX]</code>
+                    <div className="text-xs text-gray-500">Skapar en informationsruta (används främst för gästlägenhet)</div>
+                  </div>
+                  <div>
+                    <code className="bg-gray-100 px-1 rounded">[HIGHLIGHT] Viktig information [/HIGHLIGHT]</code>
+                    <div className="text-xs text-gray-500">Framhäver information med färgad bakgrund</div>
+                  </div>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs"
+                  onClick={() => {
+                    const text = "[HIGHLIGHT]Detta är viktig information som ska framhävas.[/HIGHLIGHT]";
+                    setContent(content + "\n\n" + text);
+                    toast({
+                      title: "Text tillagd",
+                      description: "Exempel på framhävd text har lagts till i innehållet.",
+                    });
+                  }}
+                >
+                  <i className="fas fa-plus-circle mr-1"></i> Lägg till exempel
+                </Button>
               </div>
             </div>
           </TabsContent>
