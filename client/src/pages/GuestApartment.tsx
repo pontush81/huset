@@ -32,40 +32,50 @@ export default function GuestApartment({ showBookingForm = false, params }: Gues
   const formatContent = (content: string): React.ReactNode => {
     if (!content) return null;
     
-    // Process HIGHLIGHT tags
-    const parts = [];
-    let lastIndex = 0;
-    let match;
+    // Formattera texten med hjälp av react-markdown
+    const formattedText = content
+      // Formatering för [HIGHLIGHT] taggar
+      .replace(/\[HIGHLIGHT\]([\s\S]*?)\[\/HIGHLIGHT\]/g, (match, p1) => {
+        return `<span class="bg-amber-100 text-amber-900 px-1 rounded">${p1}</span>`;
+      })
+      // Konvertera markdown-liknande formatering till HTML
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **bold**
+      .replace(/\*(.*?)\*/g, '<em>$1</em>') // *italic*
+      .replace(/~~(.*?)~~/g, '<del>$1</del>') // ~~strikethrough~~
+      // Konvertera enkla länkar [text](url)
+      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-primary hover:underline" target="_blank">$1</a>')
+      // Konvertera rubriker
+      .replace(/^# (.*?)$/gm, '<h1 class="text-xl font-bold my-2">$1</h1>')
+      .replace(/^## (.*?)$/gm, '<h2 class="text-lg font-bold my-2">$1</h2>')
+      .replace(/^### (.*?)$/gm, '<h3 class="text-base font-bold my-2">$1</h3>')
+      // Konvertera punktlistor - först gruppera listpunkter och omge med <ul> tagg
+      .replace(/((^|\n)- .+)+/g, function(match) {
+        // Konvertera varje rad i listan till ett <li> element
+        const items = match.split('\n').map(item => {
+          if (item.startsWith('- ')) {
+            return `<li class="ml-4">${item.substring(2)}</li>`;
+          }
+          return item;
+        }).join('');
+        // Omge med <ul> tagg
+        return `<ul class="list-disc my-2">${items}</ul>`;
+      })
+      // Konvertera numrerade listor - gruppera och omge med <ol> tagg
+      .replace(/((^|\n)\d+\. .+)+/g, function(match) {
+        // Konvertera varje rad i listan till ett <li> element
+        const items = match.split('\n').map(item => {
+          if (/^\d+\. /.test(item)) {
+            return `<li class="ml-4">${item.replace(/^\d+\. /, '')}</li>`;
+          }
+          return item;
+        }).join('');
+        // Omge med <ol> tagg
+        return `<ol class="list-decimal my-2 pl-6">${items}</ol>`;
+      });
     
-    // Regular expression to find [HIGHLIGHT]...[/HIGHLIGHT] tags
-    const highlightRegex = /\[HIGHLIGHT\]([\s\S]*?)\[\/HIGHLIGHT\]/g;
-    
-    while ((match = highlightRegex.exec(content)) !== null) {
-      // Add text before the tag
-      if (match.index > lastIndex) {
-        parts.push(<span key={`text-${lastIndex}`}>{content.slice(lastIndex, match.index)}</span>);
-      }
-      
-      // Add the highlighted content
-      const highlightedText = match[1]; // The content between the tags
-      parts.push(
-        <span 
-          key={`highlight-${match.index}`} 
-          className="bg-amber-100 text-amber-900 px-1 rounded"
-        >
-          {highlightedText}
-        </span>
-      );
-      
-      lastIndex = match.index + match[0].length;
-    }
-    
-    // Add any remaining text after the last match
-    if (lastIndex < content.length) {
-      parts.push(<span key={`text-${lastIndex}`}>{content.slice(lastIndex)}</span>);
-    }
-    
-    return parts.length > 0 ? parts : content;
+    // Return the formatted text as dangerouslySetInnerHTML
+    // Detta är säkert eftersom vi bara konverterar text som kommer från admin
+    return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
   };
   
   // Parse section content to extract info box items

@@ -99,7 +99,21 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
       if (slug !== section.slug) {
         queryClient.invalidateQueries({ queryKey: [`/api/sections/${slug}`] });
       }
+      
+      // Spara sektions-ID så vi kan scrolla till den efter omladdning
+      const sectionId = section.slug;
+      
+      // Avsluta redigeringsläget
       onCancel();
+      
+      // Scrolla till rätt position efter att sidan har uppdaterats
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          console.log("Scrolling to section:", sectionId);
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
     },
     onError: (error: Error) => {
       toast({
