@@ -136,7 +136,7 @@ export default function Home() {
     // Special handling for guest apartment section
     if (section.slug === "gastlagenhet") {
       return (
-        <section key={section.id} id={section.slug} className="mb-8 scroll-mt-20">
+        <section key={section.id} id={section.slug} className="mb-8 scroll-mt-28">
           <Card className="bg-white rounded-lg shadow-md">
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -196,7 +196,12 @@ export default function Home() {
     
     // Standard section rendering
     return (
-      <section key={section.id} id={section.slug} className="mb-8 scroll-mt-20">
+      <section 
+        key={section.id} 
+        id={section.slug} 
+        className="mb-8 scroll-mt-28"
+        data-section-id={section.id}
+      >
         <Card className="bg-white rounded-lg shadow-md">
           <CardContent className="p-6">
             <div className="flex justify-between items-center mb-4">

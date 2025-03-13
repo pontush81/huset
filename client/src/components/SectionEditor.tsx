@@ -102,18 +102,38 @@ export default function SectionEditor({ section, onCancel, isGuestApartment = fa
       
       // Spara sektions-ID så vi kan scrolla till den efter omladdning
       const sectionId = section.slug;
+      const sectionIdNumber = section.id;
       
       // Avsluta redigeringsläget
       onCancel();
       
       // Scrolla till rätt position efter att sidan har uppdaterats
       setTimeout(() => {
+        // Hitta rätt element med ID (slug) för sektionen
         const element = document.getElementById(sectionId);
+        
         if (element) {
-          console.log("Scrolling to section:", sectionId);
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          console.log("Scrolling to section:", sectionId, "with ID:", sectionIdNumber);
+          
+          // Lägg till en klass för att markera den aktiva sektionen
+          element.classList.add('just-edited');
+          
+          // Scrolla med mer precis offset för att säkerställa att rätt sektion visas
+          const headerOffset = 120; // Ökad offset för att undvika problem
+          
+          window.scrollTo({
+            top: element.offsetTop - headerOffset,
+            behavior: 'smooth'
+          });
+          
+          // Ta bort markeringen efter en stund
+          setTimeout(() => {
+            element.classList.remove('just-edited');
+          }, 3000);
+        } else {
+          console.error("Could not find section with ID:", sectionId);
         }
-      }, 300);
+      }, 600); // Längre fördröjning för att säkerställa att DOMen har uppdaterats
     },
     onError: (error: Error) => {
       toast({

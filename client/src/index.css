@@ -95,4 +95,18 @@
   .responsive-heading {
     @apply text-xl sm:text-2xl md:text-3xl font-bold;
   }
+  
+  /* Sektion som nyligen redigerats får en lätt markering */
+  .just-edited {
+    animation: highlight-section 3s ease-out;
+  }
+
+  @keyframes highlight-section {
+    0% {
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.5);
+    }
+    100% {
+      box-shadow: 0 0 0 0px rgba(30, 64, 175, 0);
+    }
+  }
 }
