@@ -17,7 +17,7 @@ interface AdminCredentials {
 // Admin Dashboard component
 const AdminDashboard = () => {
   const [sections, setSections] = useState<Section[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -208,6 +208,22 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       
+      // Get sections directly from /api/sections first
+      try {
+        const sectionsResponse = await fetch('/api/sections');
+        if (sectionsResponse.ok) {
+          const sectionData = await sectionsResponse.json();
+          console.log("Got sections from main API endpoint:", sectionData.length, "sections");
+          setSections(sectionData);
+          setError(null);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.log("Couldn't get sections from main endpoint, trying dashboard");
+      }
+      
+      // Fallback to admin dashboard
       const response = await fetch('/api/admin/dashboard', {
         headers: {
           'Authorization': `Basic ${btoa(`:${credentials.password}`)}`,
@@ -216,7 +232,8 @@ const AdminDashboard = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setSections(data.sections);
+        console.log("Got sections from admin dashboard:", data.sections?.length, "sections");
+        setSections(data.sections || []);
         setError(null);
       } else {
         throw new Error('Failed to fetch sections');
