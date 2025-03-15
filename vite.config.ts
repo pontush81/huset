@@ -22,7 +22,6 @@ const serverOnlyDependencies = [
   'passport-local'
 ];
 
-
 export default defineConfig({
   plugins: [
     react(),
