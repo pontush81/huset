@@ -224,6 +224,9 @@ module.exports = async (req, res) => {
       path = path.substring(4);
     }
     
+    // Debug: Log the current state of sections to verify they all have valid IDs
+    console.log('Current sections:', sections.map(s => s ? { id: s.id, title: s.title } : 'undefined'));
+    
     // Log request details
     console.log('Request details:', {
       method: req.method,
@@ -324,6 +327,8 @@ module.exports = async (req, res) => {
             // Parse the request body
             const updates = await parseBody(req);
             
+            console.log(`Received updates for section (admin) ${section.id}:`, updates);
+            
             // Update only allowed fields
             const allowedFields = ['title', 'content', 'icon', 'slug'];
             const updatedSection = { ...section };
@@ -337,6 +342,15 @@ module.exports = async (req, res) => {
             // Update updatedAt timestamp
             updatedSection.updatedAt = new Date().toISOString();
             
+            // Validate updatedSection has all required fields
+            if (!updatedSection.id) {
+              console.error('Missing ID in updated section:', updatedSection);
+              return res.status(400).end(safeStringify({ 
+                error: 'Invalid section data', 
+                message: 'Section ID is missing after update' 
+              }));
+            }
+            
             // Update sections array
             sections[sectionIndex] = updatedSection;
             
@@ -344,7 +358,11 @@ module.exports = async (req, res) => {
             return res.end(safeStringify(updatedSection));
           } catch (error) {
             console.error('Error updating section (admin):', error);
-            return res.status(400).end(safeStringify({ error: 'Invalid request body' }));
+            return res.status(400).end(safeStringify({ 
+              error: 'Invalid request body',
+              message: error.message,
+              stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            }));
           }
         }
         
@@ -461,6 +479,8 @@ module.exports = async (req, res) => {
           // Parse the request body
           const updates = await parseBody(req);
           
+          console.log(`Received updates for section ${section.id}:`, updates);
+          
           // Update only allowed fields
           const allowedFields = ['title', 'content', 'icon', 'slug'];
           const updatedSection = { ...section };
@@ -474,6 +494,15 @@ module.exports = async (req, res) => {
           // Update updatedAt timestamp
           updatedSection.updatedAt = new Date().toISOString();
           
+          // Validate updatedSection has all required fields
+          if (!updatedSection.id) {
+            console.error('Missing ID in updated section:', updatedSection);
+            return res.status(400).end(safeStringify({ 
+              error: 'Invalid section data', 
+              message: 'Section ID is missing after update' 
+            }));
+          }
+          
           // Update sections array
           sections[sectionIndex] = updatedSection;
           
@@ -481,7 +510,11 @@ module.exports = async (req, res) => {
           return res.end(safeStringify(updatedSection));
         } catch (error) {
           console.error('Error updating section:', error);
-          return res.status(400).end(safeStringify({ error: 'Invalid request body' }));
+          return res.status(400).end(safeStringify({ 
+            error: 'Invalid request body',
+            message: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+          }));
         }
       }
       
@@ -607,7 +640,8 @@ module.exports = async (req, res) => {
     console.error('API Error:', error);
     return res.status(500).end(safeStringify({ 
       error: 'Internal Server Error',
-      message: error.message
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }));
   }
 }; 
