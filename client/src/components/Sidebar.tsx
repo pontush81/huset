@@ -163,32 +163,7 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                           <span className="truncate">{section.title}</span>
                         </button>
                         
-                        {/* Booking management under Guest Apartment */}
-                        {section.slug === "gastlagenhet" && (
-                          <button 
-                            onClick={() => {
-                              handleAdminClick('/admin/bokningar');
-                              // Close sidebar on mobile
-                              if (window.innerWidth < 768) {
-                                closeSidebar();
-                              }
-                            }}
-                            style={{
-                              textAlign: 'left', 
-                              width: '100%', 
-                              backgroundColor: location.includes("/admin/bokningar") ? '#f3f4f6' : 'white',
-                              justifyContent: 'flex-start'
-                            }}
-                            className={`flex items-center text-xs md:text-sm py-2.5 px-3 ml-4 rounded touch-manipulation ${
-                              location.includes("/admin/bokningar") 
-                                ? 'bg-secondary font-medium' 
-                                : 'hover:bg-secondary'
-                            } transition-colors duration-200 ios-tap-highlight-fix`}
-                          >
-                            <i className="fas fa-calendar-check mr-2 text-primary w-4 text-center"></i>
-                            <span className="truncate">Hantera bokningar</span>
-                          </button>
-                        )}
+
                       </li>
                     ))}
                   </>

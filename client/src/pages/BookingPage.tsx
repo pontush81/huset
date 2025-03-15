@@ -32,7 +32,7 @@ export default function BookingPage() {
             Tillbaka till startsidan
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold mb-2">Gästlägenhet - Bokningshantering</h1>
+        <h1 className="text-3xl font-bold mb-2">Gästlägenhet</h1>
         <p className="text-muted-foreground">
           Här kan du boka föreningens gästlägenhet och hantera bokningar.
         </p>
@@ -60,7 +60,6 @@ export default function BookingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="bg-white rounded-lg shadow-md">
               <CardContent className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Bokningsformulär</h2>
                 <BookingForm />
               </CardContent>
             </Card>
@@ -68,11 +67,7 @@ export default function BookingPage() {
             <div>
               <Card className="bg-white rounded-lg shadow-md mb-6">
                 <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold mb-4">Dokument och information</h2>
-                  <DocumentList category="gastlagenhet" limit={3} />
-                  
-                  <div className="mt-4 pt-4 border-t border-border space-y-4">
-                    <h3 className="font-medium mb-2">Mer information</h3>
+                  <div className="space-y-4">
                     <Button 
                       variant="outline" 
                       className="w-full"
@@ -88,7 +83,7 @@ export default function BookingPage() {
                     
                     <Button 
                       variant="outline" 
-                      className="w-full mt-2"
+                      className="w-full"
                       onClick={() => {
                         setActiveTab("booking-manage");
                       }}
