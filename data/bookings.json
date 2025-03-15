@@ -206,5 +206,18 @@
     "status": "cancelled",
     "id": 16,
     "createdAt": "2025-03-12T20:28:21.874Z"
+  },
+  {
+    "name": "test",
+    "apartmentNumber": "1",
+    "email": "pontus.hberg@gmail.com",
+    "phone": "0702887147",
+    "checkInDate": "2025-03-31",
+    "checkOutDate": "2025-04-06",
+    "guestCount": 1,
+    "message": null,
+    "status": "confirmed",
+    "id": 17,
+    "createdAt": "2025-03-15T12:47:39.554Z"
   }
 ]
