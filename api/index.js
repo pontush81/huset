@@ -92,6 +92,9 @@ const defaultSections = [
 // In-memory sections
 const sections = [...defaultSections];
 
+// Auto increment counter for new section IDs
+let nextSectionId = sections.reduce((maxId, section) => Math.max(maxId, section.id), 0) + 1;
+
 // Safe JSON stringify
 function safeStringify(obj) {
   try {
@@ -120,12 +123,50 @@ async function parseBody(req) {
   });
 }
 
+// Create a slug from a title
+function createSlug(title) {
+  return title
+    .toLowerCase()
+    .replace(/å/g, 'a')
+    .replace(/ä/g, 'a')
+    .replace(/ö/g, 'o')
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-');
+}
+
+// Simple basic auth middleware
+function validateAdminAuth(req) {
+  const authHeader = req.headers.authorization;
+  
+  // Skip auth validation if AUTH_SECRET is not set
+  if (!process.env.AUTH_SECRET) {
+    console.warn('Warning: AUTH_SECRET not set. Admin authentication disabled.');
+    return true;
+  }
+  
+  if (!authHeader) {
+    return false;
+  }
+  
+  // Basic auth format: "Basic base64(username:password)"
+  const base64Credentials = authHeader.split(' ')[1];
+  if (!base64Credentials) {
+    return false;
+  }
+  
+  const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8');
+  const [username, password] = credentials.split(':');
+  
+  // Simple password check (in a real app, use proper hashing)
+  return password === process.env.AUTH_SECRET;
+}
+
 // Direct handler for Vercel serverless functions
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -149,9 +190,49 @@ module.exports = async (req, res) => {
         return res.end(safeStringify(sections));
       }
       
-      // POST to create a new section (not implemented yet)
+      // POST to create a new section
       if (req.method === 'POST') {
-        return res.status(501).end(safeStringify({ error: 'Creating new sections is not implemented yet' }));
+        // Validate admin authentication for POST requests
+        if (!validateAdminAuth(req)) {
+          return res.status(401).end(safeStringify({ 
+            error: 'Unauthorized',
+            message: 'Admin authentication required'
+          }));
+        }
+        
+        try {
+          const newSectionData = await parseBody(req);
+          
+          // Validate required fields
+          if (!newSectionData.title) {
+            return res.status(400).end(safeStringify({ 
+              error: 'Bad Request', 
+              message: 'Title is required' 
+            }));
+          }
+          
+          // Create new section with defaults for missing fields
+          const newSection = {
+            id: nextSectionId++,
+            title: newSectionData.title,
+            slug: newSectionData.slug || createSlug(newSectionData.title),
+            content: newSectionData.content || '',
+            icon: newSectionData.icon || 'fa-file',
+            updatedAt: new Date().toISOString()
+          };
+          
+          // Add to sections array
+          sections.push(newSection);
+          
+          console.log(`Created new section: ${newSection.title} (ID: ${newSection.id})`);
+          return res.status(201).end(safeStringify(newSection));
+        } catch (error) {
+          console.error('Error creating section:', error);
+          return res.status(400).end(safeStringify({ 
+            error: 'Bad Request', 
+            message: error.message 
+          }));
+        }
       }
     }
     
@@ -185,18 +266,31 @@ module.exports = async (req, res) => {
       
       // PUT or PATCH request to update a section
       if (req.method === 'PUT' || req.method === 'PATCH') {
+        // Validate admin authentication for PUT/PATCH requests
+        if (!validateAdminAuth(req)) {
+          return res.status(401).end(safeStringify({ 
+            error: 'Unauthorized',
+            message: 'Admin authentication required'
+          }));
+        }
+        
         try {
           // Parse the request body
           const updates = await parseBody(req);
           
           // Update only allowed fields
-          const allowedFields = ['title', 'content', 'icon'];
+          const allowedFields = ['title', 'content', 'icon', 'slug'];
           const updatedSection = { ...section };
           
           for (const field of allowedFields) {
             if (updates[field] !== undefined) {
               updatedSection[field] = updates[field];
             }
+          }
+          
+          // Generate slug from title if title changed but slug wasn't provided
+          if (updates.title && !updates.slug) {
+            updatedSection.slug = createSlug(updates.title);
           }
           
           // Always update the timestamp
@@ -213,10 +307,50 @@ module.exports = async (req, res) => {
         }
       }
       
-      // DELETE request (not implemented yet)
+      // DELETE request
       if (req.method === 'DELETE') {
-        return res.status(501).end(safeStringify({ error: 'Deleting sections is not implemented yet' }));
+        // Validate admin authentication for DELETE requests
+        if (!validateAdminAuth(req)) {
+          return res.status(401).end(safeStringify({ 
+            error: 'Unauthorized',
+            message: 'Admin authentication required'
+          }));
+        }
+        
+        // Remove the section
+        const deletedSection = sections.splice(sectionIndex, 1)[0];
+        console.log(`Deleted section ${deletedSection.id}: ${deletedSection.title}`);
+        
+        return res.status(200).end(safeStringify({ 
+          success: true,
+          message: `Section "${deletedSection.title}" deleted successfully`,
+          deletedSection
+        }));
       }
+    }
+    
+    // Admin dashboard data
+    if (path === '/admin/dashboard' || path === '/admin/dashboard/') {
+      // Validate admin authentication for dashboard data
+      if (!validateAdminAuth(req)) {
+        return res.status(401).end(safeStringify({ 
+          error: 'Unauthorized',
+          message: 'Admin authentication required'
+        }));
+      }
+      
+      const dashboardData = {
+        totalSections: sections.length,
+        lastUpdated: new Date().toISOString(),
+        sections: sections.map(s => ({
+          id: s.id,
+          title: s.title,
+          slug: s.slug,
+          updatedAt: s.updatedAt
+        }))
+      };
+      
+      return res.end(safeStringify(dashboardData));
     }
     
     // Health check
@@ -237,9 +371,10 @@ module.exports = async (req, res) => {
         api: 'BRF Ellagården API',
         version: '1.0.0',
         endpoints: [
-          '/sections (GET)',
-          '/sections/:id (GET, PUT, PATCH)',
+          '/sections (GET, POST)',
+          '/sections/:id (GET, PUT, PATCH, DELETE)',
           '/sections/:slug (GET)',
+          '/admin/dashboard (GET)',
           '/health (GET)'
         ],
         sections: sections.length

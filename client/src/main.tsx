@@ -2,6 +2,7 @@
 import React from 'react';
 import { createRoot } from "react-dom/client";
 import SimpleApp from "./SimpleApp";
+import AdminDashboard from "./AdminDashboard";
 import "./index.css";
 
 // Setup error handlers
@@ -55,9 +56,12 @@ function initApp() {
       throw new Error('Root element not found');
     }
     
+    // Check if we're on the admin page
+    const isAdminPage = window.location.pathname === '/admin';
+    
     createRoot(container).render(
       <React.StrictMode>
-        <SimpleApp />
+        {isAdminPage ? <AdminDashboard /> : <SimpleApp />}
       </React.StrictMode>
     );
   } catch (error) {

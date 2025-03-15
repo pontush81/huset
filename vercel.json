@@ -4,6 +4,7 @@
   "outputDirectory": "client/dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/admin", "destination": "/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
