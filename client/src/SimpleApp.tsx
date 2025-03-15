@@ -90,12 +90,18 @@ const EditSection = ({
         <div className="bg-red-50 text-red-700 p-3 rounded mb-4 border-l-4 border-red-500">
           <p className="font-bold">Det uppstod ett fel:</p>
           <p>{error}</p>
+          {error.includes('404') && (
+            <p className="mt-2 text-sm">
+              API-slutpunkten för att spara saknas. Dina ändringar kommer att sparas lokalt istället.
+            </p>
+          )}
         </div>
       )}
       
       {saveSuccess && (
         <div className="bg-green-50 text-green-700 p-3 rounded mb-4 border-l-4 border-green-500">
           <p>Ändringarna har sparats!</p>
+          {debugMode && <p className="text-sm mt-1">(Ändringarna sparades lokalt)</p>}
         </div>
       )}
       
@@ -138,6 +144,7 @@ const EditSection = ({
             <p>Section ID: {section.id}</p>
             <p>Section Slug: {section.slug}</p>
             <p>Content Length: {content.length} characters</p>
+            <p>Local Storage Active: Yes</p>
           </div>
         )}
       </form>
@@ -245,6 +252,47 @@ const Content = ({
   );
 };
 
+// Local storage helper functions
+const localStorageHelpers = {
+  getSavedSections: (): Section[] => {
+    try {
+      const saved = localStorage.getItem('brf_handbook_sections');
+      return saved ? JSON.parse(saved) : [];
+    } catch (err) {
+      console.error('Failed to load from localStorage:', err);
+      return [];
+    }
+  },
+  
+  saveSections: (sections: Section[]): void => {
+    try {
+      localStorage.setItem('brf_handbook_sections', JSON.stringify(sections));
+    } catch (err) {
+      console.error('Failed to save to localStorage:', err);
+    }
+  },
+  
+  mergeWithLocalStorage: (apiSections: Section[]): Section[] => {
+    const localSections = localStorageHelpers.getSavedSections();
+    
+    // If no local data, just return API data
+    if (localSections.length === 0) return apiSections;
+    
+    // Merge data - prefer local content when available
+    return apiSections.map(apiSection => {
+      const localSection = localSections.find(s => s.id === apiSection.id);
+      if (localSection) {
+        return { 
+          ...apiSection, 
+          content: localSection.content,
+          updatedAt: localSection.updatedAt
+        };
+      }
+      return apiSection;
+    });
+  }
+};
+
 // Main App component
 const App = () => {
   const [sections, setSections] = useState<Section[]>([]);
@@ -254,16 +302,23 @@ const App = () => {
   const [error, setError] = useState<string | null>(null);
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [debugMode, setDebugMode] = useState(false);
+  const [apiAvailable, setApiAvailable] = useState(true);
 
   // Check for debug mode
   useEffect(() => {
     if (window.location.search.includes('debug=true')) {
       setDebugMode(true);
-      console.log('Debug mode enabled');
+      console.log('Debug mode enabled via URL');
+    }
+    
+    // Check for existing local storage data
+    const localSections = localStorageHelpers.getSavedSections();
+    if (localSections.length > 0) {
+      console.log('Found locally saved section data');
     }
   }, []);
 
-  // Fetch sections from API
+  // Fetch sections from API and merge with local storage
   useEffect(() => {
     const fetchSections = async () => {
       try {
@@ -271,13 +326,26 @@ const App = () => {
         if (!response.ok) {
           throw new Error('Failed to fetch sections');
         }
-        const data = await response.json();
-        setSections(data);
+        const apiData = await response.json();
+        
+        // Merge with local storage data if any exists
+        const mergedData = localStorageHelpers.mergeWithLocalStorage(apiData);
+        setSections(mergedData);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching sections:', err);
         setError('Failed to load sections. Please try again later.');
         setLoading(false);
+        setApiAvailable(false);
+        
+        // If API fails, try to load from localStorage as fallback
+        const localSections = localStorageHelpers.getSavedSections();
+        if (localSections.length > 0) {
+          console.log('Using locally saved data as fallback');
+          setSections(localSections);
+          setError(null);
+          setDebugMode(true); // Enable debug mode automatically when API fails
+        }
       }
     };
 
@@ -300,7 +368,36 @@ const App = () => {
 
   const handleSaveSection = async (updatedSection: Partial<Section>) => {
     if (!editingSection) return;
+    
+    // Create an updated section object
+    const updatedData = {
+      ...editingSection,
+      ...updatedSection,
+      updatedAt: new Date().toISOString()
+    };
 
+    // Always save to localStorage as a backup
+    const updatedSections = sections.map(s => 
+      s.id === updatedData.id ? updatedData : s
+    );
+    localStorageHelpers.saveSections(updatedSections);
+    
+    // If debug mode is active or API previously failed, use local storage only
+    if (debugMode || !apiAvailable) {
+      console.log('Debug mode or API unavailable - saving locally only');
+      
+      // Update sections with the updated one
+      setSections(updatedSections);
+      
+      // If the active section was updated, update it as well
+      if (activeSection && activeSection.id === updatedData.id) {
+        setActiveSection(updatedData);
+      }
+      
+      return;
+    }
+    
+    // If not in debug mode, try API
     try {
       // First, attempt to use the official API endpoint
       let response = await fetch(`/api/sections/${editingSection.id}`, {
@@ -319,52 +416,44 @@ const App = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            ...editingSection,
-            ...updatedSection
-          }),
+          body: JSON.stringify(updatedData),
         });
       }
 
-      // If we still get an error, try to use a fallback method
+      // If we still get an error, switch to local storage mode
       if (!response.ok) {
-        if (debugMode) {
-          console.log('API failed, using local update as fallback');
+        if (response.status === 404) {
+          // API endpoint not found - automatically switch to local storage mode
+          console.log('API endpoint not found (404) - activating local storage mode');
+          setDebugMode(true);
+          setApiAvailable(false);
           
-          // Update locally in debug mode
-          const updatedData = {
-            ...editingSection,
-            ...updatedSection,
-            updatedAt: new Date().toISOString()
-          };
+          // We already saved to localStorage above, so let the changes apply
+          setSections(updatedSections);
           
-          // Update sections array with the locally updated section
-          setSections(
-            sections.map((s) => (s.id === updatedData.id ? updatedData : s))
-          );
-          
-          // Update active section if needed
+          // If the active section was updated, update it as well
           if (activeSection && activeSection.id === updatedData.id) {
             setActiveSection(updatedData);
           }
           
-          return;
+          // Throw error for UI feedback
+          throw new Error(`API-slutpunkten hittades inte (404). Dina ändringar har sparats lokalt istället.`);
         } else {
           throw new Error(`Kunde inte spara (${response.status}): ${response.statusText}`);
         }
       }
 
       // Parse the response from the API
-      const updatedData = await response.json();
+      const apiResponseData = await response.json();
       
-      // Update sections with the updated one
+      // Update sections with the updated one from API
       setSections(
-        sections.map((s) => (s.id === updatedData.id ? updatedData : s))
+        sections.map((s) => (s.id === apiResponseData.id ? apiResponseData : s))
       );
 
       // If the active section was updated, update it as well
-      if (activeSection && activeSection.id === updatedData.id) {
-        setActiveSection(updatedData);
+      if (activeSection && activeSection.id === apiResponseData.id) {
+        setActiveSection(apiResponseData);
       }
 
     } catch (err: any) {
@@ -388,7 +477,7 @@ const App = () => {
     );
   }
 
-  if (error) {
+  if (error && sections.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center text-red-600">
