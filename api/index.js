@@ -93,7 +93,7 @@ const defaultSections = [
 let sections = [...defaultSections];
 
 // Auto increment counter for new section IDs
-let nextSectionId = sections.reduce((maxId, section) => Math.max(maxId, section.id), 0) + 1;
+let nextSectionId = sections.reduce((maxId, section) => Math.max(maxId, section.id || 0), 0) + 1;
 
 // Safe JSON stringify
 function safeStringify(obj) {
@@ -178,6 +178,20 @@ function validateAdminAuth(req) {
   }
 }
 
+// Find next available ID (safe version)
+function getNextAvailableId(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return 1; // Start with ID 1 if no items
+  }
+  
+  // Filter out items without valid IDs before mapping
+  const validIds = items
+    .filter(item => item && typeof item.id === 'number')
+    .map(item => item.id);
+    
+  return validIds.length > 0 ? Math.max(...validIds) + 1 : 1;
+}
+
 // Main handler function
 module.exports = async (req, res) => {
   // Enable CORS
@@ -249,8 +263,8 @@ module.exports = async (req, res) => {
             newSection.slug = createSlug(newSection.title);
           }
           
-          // Find next available ID
-          const nextId = Math.max(0, ...sections.map(s => s.id)) + 1;
+          // Find next available ID (using safe method)
+          const nextId = getNextAvailableId(sections);
           
           // Create new section
           const createdSection = {
@@ -377,8 +391,8 @@ module.exports = async (req, res) => {
             newSection.slug = createSlug(newSection.title);
           }
           
-          // Find next available ID
-          const nextId = Math.max(0, ...sections.map(s => s.id)) + 1;
+          // Find next available ID (using safe method)
+          const nextId = getNextAvailableId(sections);
           
           // Create new section
           const createdSection = {
