@@ -257,8 +257,9 @@ const AdminDashboard = () => {
     
     try {
       setLoading(true);
+      setError(null);
       
-      const response = await fetch('/api/sections', {
+      const response = await fetch('/api/admin/sections', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -268,28 +269,29 @@ const AdminDashboard = () => {
       });
       
       if (response.ok) {
-        const createdSection = await response.json();
+        const result = await response.json();
+        console.log('Section created:', result);
         
-        // Fetch updated sections list
-        await fetchSections();
+        // Add new section to list
+        setSections([...sections, result.section]);
         
-        // Reset new section form
+        // Reset form
         setNewSection({ title: '', content: '', icon: 'fa-file' });
         setShowNewSectionForm(false);
-        setSuccessMessage(`Created new section: ${createdSection.title}`);
+        setSuccessMessage(result.message || 'Section created successfully');
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create section');
+        setError(errorData.message || 'Failed to create section');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error creating section:', err);
-      setError(err.message || 'Failed to create section');
+      setError('Error creating section. Is the API running?');
     } finally {
       setLoading(false);
     }
   };
-  
-  // Update section
+
+  // Update existing section
   const handleUpdateSection = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -297,8 +299,9 @@ const AdminDashboard = () => {
     
     try {
       setLoading(true);
+      setError(null);
       
-      const response = await fetch(`/api/sections/${editingSection.id}`, {
+      const response = await fetch(`/api/admin/sections/${editingSection.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -308,7 +311,9 @@ const AdminDashboard = () => {
       });
       
       if (response.ok) {
-        const updatedSection = await response.json();
+        const result = await response.json();
+        const updatedSection = result.section;
+        console.log('Section updated:', updatedSection);
         
         // Update sections list
         setSections(sections.map(s => 
@@ -316,19 +321,19 @@ const AdminDashboard = () => {
         ));
         
         setEditingSection(null);
-        setSuccessMessage(`Updated section: ${updatedSection.title}`);
+        setSuccessMessage(result.message || 'Section updated successfully');
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update section');
+        setError(errorData.message || 'Failed to update section');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error updating section:', err);
-      setError(err.message || 'Failed to update section');
+      setError('Error updating section. Is the API running?');
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Delete section
   const handleDeleteSection = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this section?')) {
@@ -337,8 +342,9 @@ const AdminDashboard = () => {
     
     try {
       setLoading(true);
+      setError(null);
       
-      const response = await fetch(`/api/sections/${id}`, {
+      const response = await fetch(`/api/admin/sections/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Basic ${btoa(`:${credentials.password}`)}`,
@@ -347,27 +353,28 @@ const AdminDashboard = () => {
       
       if (response.ok) {
         const result = await response.json();
+        console.log('Section deleted:', result);
         
         // Update sections list
         setSections(sections.filter(s => s.id !== id));
         setSuccessMessage(result.message || 'Section deleted successfully');
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete section');
+        setError(errorData.message || 'Failed to delete section');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error deleting section:', err);
-      setError(err.message || 'Failed to delete section');
+      setError('Error deleting section. Is the API running?');
     } finally {
       setLoading(false);
     }
   };
 
-  // If not authenticated, show login form
+  // Login form
   if (!isAuthenticated) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+        <div className="w-full max-w-md p-6 sm:p-8 bg-white rounded-lg shadow-lg">
           <h1 className="text-2xl font-bold text-center mb-6">Admin Login</h1>
           
           {error && (
@@ -444,8 +451,8 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-900">BRF Handbok Admin</h1>
+        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center">
+          <h1 className="text-xl font-bold text-gray-900 mb-4 sm:mb-0">BRF Handbok Admin</h1>
           <div className="flex space-x-4">
             <button 
               onClick={() => window.location.href = '/'}
@@ -463,7 +470,7 @@ const AdminDashboard = () => {
         </div>
       </header>
       
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {successMessage && (
           <div className="bg-green-50 text-green-700 p-3 rounded mb-4 border-l-4 border-green-500">
             {successMessage}
@@ -483,11 +490,11 @@ const AdminDashboard = () => {
         )}
         
         <div className="bg-white shadow rounded-lg mb-6">
-          <div className="px-4 py-5 border-b border-gray-200 sm:px-6 flex justify-between items-center">
-            <h2 className="text-lg font-medium text-gray-900">Manage Sections</h2>
+          <div className="px-4 py-5 border-b border-gray-200 sm:px-6 flex flex-col sm:flex-row justify-between items-center">
+            <h2 className="text-lg font-medium text-gray-900 mb-4 sm:mb-0">Manage Sections</h2>
             <button
               onClick={() => setShowNewSectionForm(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 w-full sm:w-auto"
             >
               Add New Section
             </button>
@@ -495,7 +502,7 @@ const AdminDashboard = () => {
           
           {/* New Section Form */}
           {showNewSectionForm && (
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-4 sm:p-6 border-b border-gray-200">
               <form onSubmit={handleCreateSection}>
                 <div className="mb-4">
                   <label htmlFor="new-title" className="block text-sm font-medium text-gray-700 mb-1">
@@ -544,17 +551,17 @@ const AdminDashboard = () => {
                   />
                 </div>
                 
-                <div className="flex justify-end space-x-2">
+                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
                   <button
                     type="button"
                     onClick={() => setShowNewSectionForm(false)}
-                    className="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 w-full sm:w-auto"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700"
+                    className="px-4 py-2 bg-blue-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700 w-full sm:w-auto"
                     disabled={loading}
                   >
                     {loading ? 'Creating...' : 'Create Section'}
@@ -566,7 +573,7 @@ const AdminDashboard = () => {
           
           {/* Edit Section Form */}
           {editingSection && (
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-4 sm:p-6 border-b border-gray-200">
               <h3 className="text-lg font-medium mb-4">Edit Section: {editingSection.title}</h3>
               <form onSubmit={handleUpdateSection}>
                 <div className="mb-4">
@@ -629,17 +636,17 @@ const AdminDashboard = () => {
                   />
                 </div>
                 
-                <div className="flex justify-end space-x-2">
+                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
                   <button
                     type="button"
                     onClick={() => setEditingSection(null)}
-                    className="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 w-full sm:w-auto"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700"
+                    className="px-4 py-2 bg-blue-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700 w-full sm:w-auto"
                     disabled={loading}
                   >
                     {loading ? 'Saving...' : 'Save Changes'}
@@ -651,22 +658,25 @@ const AdminDashboard = () => {
           
           {/* Sections List */}
           <div className="overflow-x-auto">
+            <div className="block sm:hidden p-4 bg-gray-50 border-b border-gray-200">
+              <p className="text-sm text-gray-500 font-medium">Scroll horizontally to see all data</p>
+            </div>
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     ID
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Title
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Slug
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Last Updated
                   </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -674,17 +684,17 @@ const AdminDashboard = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {sections.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td colSpan={5} className="px-4 sm:px-6 py-4 text-center text-sm text-gray-500">
                       {loading ? 'Loading sections...' : 'No sections found'}
                     </td>
                   </tr>
                 ) : (
                   sections.map((section) => (
                     <tr key={section.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {section.id}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <i className={`fas ${section.icon} mr-2 text-gray-400`}></i>
                           <div className="text-sm font-medium text-gray-900">
@@ -692,13 +702,13 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {section.slug}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(section.updatedAt).toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           onClick={() => setEditingSection(sections.find(s => s.id === section.id) || null)}
                           className="text-blue-600 hover:text-blue-900 mr-4"

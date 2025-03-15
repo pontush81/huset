@@ -15,19 +15,29 @@ interface Section {
 const queryClient = new QueryClient();
 
 // Simple Sidebar component
-const Sidebar = ({ sections, activeSectionSlug, setActiveSectionSlug }: { 
+const Sidebar = ({ sections, activeSectionSlug, setActiveSectionSlug, isMobileMenuOpen, setIsMobileMenuOpen }: { 
   sections: Section[]; 
   activeSectionSlug: string | null;
   setActiveSectionSlug: (slug: string) => void;
+  isMobileMenuOpen: boolean;
+  setIsMobileMenuOpen: (isOpen: boolean) => void;
 }) => {
+  const handleSectionClick = (slug: string) => {
+    setActiveSectionSlug(slug);
+    // Close mobile menu when selection is made on small screens
+    if (window.innerWidth < 768) {
+      setIsMobileMenuOpen(false);
+    }
+  };
+
   return (
-    <div className="w-64 bg-gray-100 p-4 border-r border-gray-200 h-screen overflow-auto">
+    <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:block fixed md:static top-14 left-0 right-0 bottom-0 md:w-64 bg-gray-100 p-4 border-r border-gray-200 overflow-auto z-20`}>
       <div className="font-bold text-xl mb-4">BRF Handbok</div>
       <ul>
         {sections.map((section) => (
           <li key={section.id} className="mb-2">
             <button
-              onClick={() => setActiveSectionSlug(section.slug)}
+              onClick={() => handleSectionClick(section.slug)}
               className={`w-full text-left p-2 rounded ${
                 activeSectionSlug === section.slug ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-200'
               }`}
@@ -228,36 +238,35 @@ const Content = ({
   section: Section | null,
   onEditSection: (section: Section) => void
 }) => {
+  if (!section) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-4 md:p-8">
+        <div className="text-center text-gray-500">
+          <i className="fas fa-book text-4xl mb-4"></i>
+          <h2 className="text-xl font-semibold">Välkommen till BRF Handboken</h2>
+          <p className="mt-2">Välj en sektion från menyn för att börja.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 p-8 overflow-auto h-screen">
-      {section ? (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold">
-              <i className={`fas ${section.icon} mr-2`}></i> {section.title}
-            </h1>
-            <button
-              onClick={() => onEditSection(section)}
-              className="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center"
-            >
-              <i className="fas fa-edit mr-2"></i> Redigera
-            </button>
-          </div>
-          <div className="prose max-w-none">{section.content}</div>
-          
-          <div className="mt-12 border-t pt-6">
-            <h2 className="text-2xl font-bold mb-4">Dokument</h2>
-            <div className="bg-gray-50 p-6 rounded-md border border-gray-200 text-center">
-              <p className="text-gray-500">Inga dokument tillgängliga</p>
-              <UploadDocument sectionId={section.id} />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="text-center text-gray-500 mt-20">
-          <p className="text-xl">Välj en sektion från menyn för att visa innehåll</p>
-        </div>
-      )}
+    <div className="flex-1 p-4 md:p-8 overflow-auto">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between">
+        <h1 className="text-2xl font-bold mb-2 sm:mb-0">
+          <i className={`fas ${section.icon} mr-2`}></i> {section.title}
+        </h1>
+        <button 
+          onClick={() => onEditSection(section)}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center md:justify-start w-full sm:w-auto"
+        >
+          <i className="fas fa-edit mr-2"></i> Redigera
+        </button>
+      </div>
+      <div 
+        className="prose max-w-none" 
+        dangerouslySetInnerHTML={{ __html: section.content }}
+      />
     </div>
   );
 };
@@ -313,6 +322,9 @@ const App = () => {
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [debugMode, setDebugMode] = useState(false);
   const [apiAvailable, setApiAvailable] = useState(true);
+  
+  // New state for mobile menu
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Check for debug mode
   useEffect(() => {
@@ -478,10 +490,15 @@ const App = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto"></div>
-          <p className="mt-4 text-gray-700">Laddar innehåll...</p>
+      <div className="flex flex-col min-h-screen">
+        <div className="h-14 bg-white shadow flex items-center justify-center">
+          <div className="animate-pulse h-6 w-36 bg-gray-200 rounded"></div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center p-4">
+            <i className="fas fa-spinner fa-spin text-blue-600 text-4xl mb-4"></i>
+            <p>Laddar innehåll...</p>
+          </div>
         </div>
       </div>
     );
@@ -489,42 +506,76 @@ const App = () => {
 
   if (error && sections.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center text-red-600">
-          <p className="text-xl">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Försök igen
-          </button>
+      <div className="flex flex-col min-h-screen">
+        <div className="h-14 bg-white shadow flex items-center justify-center">
+          <div className="font-bold">BRF Handbok</div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="bg-red-50 text-red-700 p-4 rounded-lg border-l-4 border-red-500 max-w-lg mx-auto">
+            <h2 className="text-lg font-semibold mb-2">Ett fel uppstod</h2>
+            <p>{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Försök igen
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      <Sidebar 
-        sections={sections} 
-        activeSectionSlug={activeSectionSlug} 
-        setActiveSectionSlug={setActiveSectionSlug} 
-      />
-      {editingSection ? (
-        <div className="flex-1 p-8 overflow-auto">
-          <EditSection 
-            section={editingSection}
-            onSave={handleSaveSection}
-            onCancel={handleCancelEdit}
-            debugMode={debugMode}
-          />
-        </div>
-      ) : (
-        <Content 
-          section={activeSection} 
-          onEditSection={handleEditSection}
-        />
+    <div className="flex flex-col min-h-screen">
+      {/* Mobile header */}
+      <div className="h-14 bg-white shadow flex items-center justify-between px-4 md:hidden sticky top-0 z-30">
+        <div className="font-bold">BRF Handbok</div>
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 rounded-md hover:bg-gray-100"
+          aria-label={isMobileMenuOpen ? "Stäng meny" : "Öppna meny"}
+        >
+          {isMobileMenuOpen ? (
+            <i className="fas fa-times"></i>
+          ) : (
+            <i className="fas fa-bars"></i>
+          )}
+        </button>
+      </div>
+
+      {/* Overlay for mobile menu */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-10 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        ></div>
       )}
+      
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar 
+          sections={sections} 
+          activeSectionSlug={activeSectionSlug} 
+          setActiveSectionSlug={setActiveSectionSlug}
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+        />
+        {editingSection ? (
+          <div className="flex-1 p-4 md:p-8 overflow-auto">
+            <EditSection 
+              section={editingSection}
+              onSave={handleSaveSection}
+              onCancel={handleCancelEdit}
+              debugMode={debugMode}
+            />
+          </div>
+        ) : (
+          <Content 
+            section={activeSection} 
+            onEditSection={handleEditSection}
+          />
+        )}
+      </div>
       
       {/* Admin footer link - hidden on smaller screens where it would already be in sidebar */}
       <div className="hidden md:block fixed bottom-2 right-4">
