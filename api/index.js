@@ -92,41 +92,94 @@ const defaultSections = [
 // In-memory sections
 const sections = [...defaultSections];
 
+// Safe JSON stringify
+function safeStringify(obj) {
+  try {
+    return JSON.stringify(obj);
+  } catch (err) {
+    console.error('Error stringifying object:', err);
+    return JSON.stringify({ error: 'Could not serialize response' });
+  }
+}
+
 // Direct handler for Vercel serverless functions
 module.exports = (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
-  // Log request
-  console.log(`${req.method} ${req.url}`);
-  
-  // Get the path without the leading /api
-  const path = req.url.replace(/^\/api/, '');
-  
-  // Handle sections routes
-  if (path === '/sections' || path === '/sections/') {
-    return res.json(sections);
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
   
-  // Handle specific section by slug
-  if (path.startsWith('/sections/')) {
-    const slug = path.split('/')[2];
-    const section = sections.find(s => s.slug === slug);
+  // Set JSON content type
+  res.setHeader('Content-Type', 'application/json');
+  
+  try {
+    // Log request
+    console.log(`${req.method} ${req.url}`);
     
-    if (section) {
-      return res.json(section);
-    } else {
-      return res.status(404).json({ error: 'Section not found' });
+    // Get the path without the leading /api
+    const path = req.url.replace(/^\/api/, '');
+    
+    // Handle sections routes
+    if (path === '/sections' || path === '/sections/') {
+      console.log(`Returning ${sections.length} sections`);
+      return res.end(safeStringify(sections));
     }
+    
+    // Handle specific section by slug
+    if (path.startsWith('/sections/')) {
+      const slug = path.split('/')[2];
+      const section = sections.find(s => s.slug === slug);
+      
+      if (section) {
+        console.log(`Found section: ${section.title}`);
+        return res.end(safeStringify(section));
+      } else {
+        console.log(`Section not found: ${slug}`);
+        return res.status(404).end(safeStringify({ error: 'Section not found' }));
+      }
+    }
+    
+    // Health check
+    if (path === '/health' || path === '/health/') {
+      const healthData = { 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        env: process.env.NODE_ENV || 'unknown',
+        sections: sections.length
+      };
+      console.log('Health check:', healthData);
+      return res.end(safeStringify(healthData));
+    }
+    
+    // If path is root, show API info
+    if (path === '/' || path === '') {
+      return res.end(safeStringify({
+        api: 'BRF Ellagården API',
+        version: '1.0.0',
+        endpoints: ['/sections', '/sections/:slug', '/health'],
+        sections: sections.length
+      }));
+    }
+    
+    // Default 404 response
+    console.log(`404 Not Found: ${path}`);
+    return res.status(404).end(safeStringify({ 
+      error: 'Not Found', 
+      path,
+      timestamp: new Date().toISOString()
+    }));
+    
+  } catch (error) {
+    console.error('API Error:', error);
+    return res.status(500).end(safeStringify({ 
+      error: 'Internal Server Error', 
+      message: error.message,
+      timestamp: new Date().toISOString()
+    }));
   }
-  
-  // Health check
-  if (path === '/health' || path === '/health/') {
-    return res.json({ status: 'ok', timestamp: new Date().toISOString() });
-  }
-  
-  // Default 404 response
-  return res.status(404).json({ error: 'Not Found', path });
 }; 

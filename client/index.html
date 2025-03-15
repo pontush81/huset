@@ -2,15 +2,72 @@
 <html lang="sv">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BRF Handbok</title>
+    <title>BRF Ellagården</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      /* Basic fallback styles if JS fails to load */
+      #root:empty + #loading {
+        display: block !important;
+      }
+      #loading {
+        display: none;
+        padding: 20px;
+        margin: 20px;
+        border: 1px solid #f5c6cb;
+        border-radius: 4px;
+        background-color: #f8d7da;
+        color: #721c24;
+        font-family: system-ui;
+      }
+      #error-log {
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 12px;
+        max-height: 200px;
+        overflow: auto;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <!-- Loading/Error fallback -->
+    <div id="loading">
+      <h2>Laddar BRF Ellagården...</h2>
+      <p>Om sidan inte laddas inom några sekunder, försök ladda om sidan.</p>
+      <button onclick="window.location.reload()" style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        Ladda om sidan
+      </button>
+      <div id="error-log"></div>
+    </div>
+    <script>
+      // Display any JavaScript errors on the page
+      window.onerror = function(message, source, lineno, colno, error) {
+        const errorLog = document.getElementById('error-log');
+        if (errorLog) {
+          const timestamp = new Date().toISOString();
+          errorLog.textContent += `[${timestamp}] Error: ${message}\nSource: ${source}:${lineno}:${colno}\n\n`;
+          document.getElementById('loading').style.display = 'block';
+        }
+        return false;
+      };
+      
+      // Add a timeout to show the loading message if the app doesn't render quickly
+      setTimeout(function() {
+        if (document.getElementById('root').children.length === 0) {
+          document.getElementById('loading').style.display = 'block';
+        }
+      }, 3000);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
