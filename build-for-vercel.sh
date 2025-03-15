@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Create a simple static build for Vercel deployment
-echo "Creating simple static build for Vercel deployment..."
+echo "Creating static build for Vercel deployment..."
 
-# Create output directory
+# Create output directory and ensure it's clean
+rm -rf client/dist
 mkdir -p client/dist
 
-# Copy simple HTML file
-echo "Copying fallback HTML..."
+# Create the index.html file with better structure
+echo "Creating index.html..."
 cat > client/dist/index.html << 'EOL'
 <!DOCTYPE html>
 <html lang="sv">
@@ -15,8 +15,9 @@ cat > client/dist/index.html << 'EOL'
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BRF Ellagården</title>
-  <link rel="stylesheet" href="index.css">
-  <script src="https://kit.fontawesome.com/1234567890.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="/index.css">
+  <script src="https://kit.fontawesome.com/4f3d4d0dc6.js" crossorigin="anonymous"></script>
+  <link rel="icon" href="/favicon.ico">
 </head>
 <body>
   <div class="container">
@@ -27,46 +28,68 @@ cat > client/dist/index.html << 'EOL'
     
     <main>
       <div id="root">
-        <!-- React app would mount here -->
         <div class="message">
-          <h2>Webbplatsen är under uppdatering</h2>
-          <p>Vi jobbar för närvarande med att uppdatera webbplatsen. Vänligen kom tillbaka lite senare.</p>
+          <h2>Välkommen till BRF Ellagården</h2>
+          <p>Webbplatsen är för närvarande under uppdatering.</p>
+          <p>Här kommer snart information om föreningen, dokument och nyheter.</p>
           <p>För frågor, kontakta styrelsen via <a href="mailto:styrelse@ellagarden.se">styrelse@ellagarden.se</a>.</p>
         </div>
       </div>
-      
-      <div id="loading" class="loading" style="display: none;">
-        Laddar applikationen...
-        <div><small>Om sidan inte laddas inom några sekunder, försök att <a href="javascript:location.reload()">ladda om sidan</a>.</small></div>
-      </div>
-      
-      <div id="error-log" class="error-log"></div>
     </main>
     
     <footer>
       <p>© 2024 BRF Ellagården. Alla rättigheter förbehållna.</p>
     </footer>
   </div>
-
-  <script>
-    // Simple error handler
-    window.addEventListener('error', function(event) {
-      console.error('Error:', event.error || event.message);
-      document.getElementById('loading').style.display = 'block';
-      const errorLog = document.getElementById('error-log');
-      errorLog.textContent += event.message + '\n';
-      errorLog.style.display = 'block';
-    });
-  </script>
 </body>
 </html>
 EOL
 
-# Create simple CSS
-echo "Creating simple CSS..."
+# Create 404.html
+echo "Creating 404.html..."
+cat > client/dist/404.html << 'EOL'
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sidan hittades inte - BRF Ellagården</title>
+  <link rel="stylesheet" href="/index.css">
+  <meta http-equiv="refresh" content="5;url=/">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>BRF Ellagården</h1>
+    </header>
+    
+    <main>
+      <div class="error-container">
+        <h2>404 - Sidan kunde inte hittas</h2>
+        <p>Tyvärr kunde vi inte hitta sidan du letar efter. Det kan bero på att:</p>
+        <ul>
+          <li>URL-adressen är felaktig</li>
+          <li>Sidan har flyttats eller tagits bort</li>
+          <li>Det är ett temporärt fel med hemsidan</li>
+        </ul>
+        <p>Du kommer att omdirigeras till <a href="/">hemsidan</a> om 5 sekunder.</p>
+      </div>
+    </main>
+    
+    <footer>
+      <p>© 2024 BRF Ellagården. Alla rättigheter förbehållna.</p>
+    </footer>
+  </div>
+</body>
+</html>
+EOL
+
+# Create the CSS file
+echo "Creating CSS..."
 cat > client/dist/index.css << 'EOL'
 :root {
   --primary-color: hsl(210, 90%, 30%);
+  --primary-light: hsl(210, 90%, 95%);
   --background: #f8f9fa;
   --foreground: #333333;
 }
@@ -107,6 +130,16 @@ h1 {
 
 h2 {
   margin: 20px 0 15px;
+  color: var(--primary-color);
+}
+
+ul {
+  margin: 15px 0;
+  padding-left: 20px;
+}
+
+li {
+  margin-bottom: 8px;
 }
 
 a {
@@ -125,23 +158,12 @@ a:hover {
   margin: 20px 0;
 }
 
-.loading {
+.error-container {
+  background: #fff8f8;
   padding: 20px;
-  text-align: center;
-  margin-top: 20px;
-  background: #f3f4f6;
-  border-radius: 4px;
-}
-
-.error-log {
-  padding: 15px;
-  margin-top: 20px;
-  background: #fee2e2;
-  border-radius: 4px;
-  color: #b91c1c;
-  font-family: monospace;
-  white-space: pre-wrap;
-  display: none;
+  border-radius: 8px;
+  margin: 20px 0;
+  border-left: 4px solid #dc2626;
 }
 
 footer {
@@ -159,9 +181,29 @@ footer {
 }
 EOL
 
-# Copy any other needed files from public directory
-echo "Copying files from public directory..."
-cp -r client/public/*.html client/dist/ 2>/dev/null || true
+# Create an empty favicon
+echo "Creating favicon..."
+touch client/dist/favicon.ico
 
-echo "Done! Files are in client/dist directory"
-echo "Upload this directory to Vercel manually if needed" 
+# Create a _redirects file for Vercel
+echo "Creating _redirects file..."
+cat > client/dist/_redirects << 'EOL'
+/*    /index.html   200
+EOL
+
+# Create a .vercel/output/config.json file with the correct routing
+echo "Creating Vercel config..."
+mkdir -p client/dist/.vercel/output/
+cat > client/dist/.vercel/output/config.json << 'EOL'
+{
+  "version": 3,
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/api/(.*)", "dest": "/api" },
+    { "src": "/(.*)", "dest": "/index.html", "status": 200 }
+  ]
+}
+EOL
+
+echo "Static build completed successfully!"
+echo "Files are in client/dist directory ready for Vercel deployment" 
