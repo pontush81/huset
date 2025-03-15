@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+
 // List of dependencies that should not be bundled (server-only)
 const serverOnlyDependencies = [
   'zod',
