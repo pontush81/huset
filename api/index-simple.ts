@@ -2,12 +2,12 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 
-// Create Express app
+// Create Express app without any complex dependencies
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Default sections for initial setup
+// Define sections directly to avoid Zod/Drizzle dependencies
 const defaultSections = [
   {
     id: 1,
@@ -96,12 +96,13 @@ const defaultSections = [
   }
 ];
 
-// In-memory section storage for Vercel (will reset on deployment)
+// Memory storage for sections
 let sections = [...defaultSections];
+let documents = [];
 
-// API Routes
+// Simple API routes
 app.get('/api/sections', (req, res) => {
-  console.log('GET /api/sections called, returning:', sections.length, 'sections');
+  console.log('GET /api/sections called');
   res.json(sections);
 });
 
@@ -116,26 +117,40 @@ app.get('/api/sections/:slug', (req, res) => {
   res.json(section);
 });
 
-// Fallback API handler
-app.use('/api/*', (req, res) => {
-  console.log('API route not found:', req.path);
-  res.status(404).json({ error: 'API route not found' });
+app.get('/api/documents', (req, res) => {
+  const { category } = req.query;
+  if (category && typeof category === 'string') {
+    res.json(documents.filter(d => d.category === category));
+  } else {
+    res.json(documents);
+  }
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', environment: process.env.NODE_ENV });
 });
 
 // Serve static files from client/dist
 const serveStatic = (app) => {
+  // Determine the correct path to the client dist directory
   const distPath = path.join(process.cwd(), 'client', 'dist');
   
   if (fs.existsSync(distPath)) {
     app.use(express.static(distPath));
     
-    // SPA fallback
+    // SPA fallback for client routes
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      if (!req.path.startsWith('/api/')) {
+        res.sendFile(path.join(distPath, 'index.html'));
+      }
     });
   } else {
+    console.error('Error: Could not find client dist folder at', distPath);
     app.get('*', (req, res) => {
-      res.send('Build directory not found. Please run build command.');
+      if (!req.path.startsWith('/api/')) {
+        res.send('Build directory not found. Please run build command.');
+      }
     });
   }
 };
@@ -143,4 +158,5 @@ const serveStatic = (app) => {
 // Set up static file serving
 serveStatic(app);
 
+// Export the Express app
 export default app; 
