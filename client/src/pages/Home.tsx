@@ -16,7 +16,12 @@ export default function Home() {
   const { data: sections, isLoading, isError, error } = useQuery<Section[]>({
     queryKey: ['/api/sections'],
     retry: 3,
-    onError: (err) => console.error('Error fetching sections:', err)
+    onSuccess: (data) => {
+      console.log('Sections loaded successfully:', data);
+    },
+    onSettled: (_data, error) => {
+      if (error) console.error('Error fetching sections:', error);
+    }
   });
   
   // Debug sections data
@@ -101,9 +106,9 @@ export default function Home() {
   };
 
   // Filtered section that aren't special pages (include all sections except footer)
-  const filteredSections = sections?.filter(
-    section => section.slug !== "footer" && section.slug !== ""
-  ).sort((a, b) => a.id - b.id) || [];
+  const filteredSections = sections ? sections.filter(
+    (section: Section) => section.slug !== "footer" && section.slug !== ""
+  ).sort((a: Section, b: Section) => a.id - b.id) : [];
 
   if (isLoading) {
     return (

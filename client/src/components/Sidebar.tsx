@@ -19,7 +19,12 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
   const { data: sections, isLoading, isError, error } = useQuery<Section[]>({
     queryKey: ['/api/sections'],
     retry: 3,
-    onError: (err) => console.error('Error fetching sections:', err)
+    onSuccess: (data) => {
+      console.log('Sections loaded successfully:', data);
+    },
+    onSettled: (_data, error) => {
+      if (error) console.error('Error fetching sections:', error);
+    }
   });
   
   // Debug sections data
@@ -151,7 +156,7 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                 ) : (
                   // Navigation links using buttons instead of <a> for better mobile handling
                   <>
-                    {sections?.map((section) => (
+                    {sections && sections.map((section: Section) => (
                       <li key={section.id}>
                         <button 
                           onClick={() => {
@@ -176,8 +181,6 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                           <i className={`fas ${section.icon} mr-2 text-primary w-5 text-center`}></i>
                           <span className="truncate">{section.title}</span>
                         </button>
-                        
-
                       </li>
                     ))}
                   </>
