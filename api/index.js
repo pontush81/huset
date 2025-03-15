@@ -102,11 +102,29 @@ function safeStringify(obj) {
   }
 }
 
+// Parse request body
+async function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (err) {
+        reject(new Error('Invalid JSON'));
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
 // Direct handler for Vercel serverless functions
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
   // Handle preflight requests
@@ -126,21 +144,78 @@ module.exports = (req, res) => {
     
     // Handle sections routes
     if (path === '/sections' || path === '/sections/') {
-      console.log(`Returning ${sections.length} sections`);
-      return res.end(safeStringify(sections));
+      if (req.method === 'GET') {
+        console.log(`Returning ${sections.length} sections`);
+        return res.end(safeStringify(sections));
+      }
+      
+      // POST to create a new section (not implemented yet)
+      if (req.method === 'POST') {
+        return res.status(501).end(safeStringify({ error: 'Creating new sections is not implemented yet' }));
+      }
     }
     
-    // Handle specific section by slug
+    // Handle specific section by ID or slug
     if (path.startsWith('/sections/')) {
-      const slug = path.split('/')[2];
-      const section = sections.find(s => s.slug === slug);
+      const idOrSlug = path.split('/')[2];
       
-      if (section) {
+      // Try to parse as ID first
+      let sectionIndex = -1;
+      const id = parseInt(idOrSlug, 10);
+      
+      if (!isNaN(id)) {
+        sectionIndex = sections.findIndex(s => s.id === id);
+      } else {
+        // If not a valid ID, try to find by slug
+        sectionIndex = sections.findIndex(s => s.slug === idOrSlug);
+      }
+      
+      if (sectionIndex === -1) {
+        console.log(`Section not found: ${idOrSlug}`);
+        return res.status(404).end(safeStringify({ error: 'Section not found' }));
+      }
+      
+      const section = sections[sectionIndex];
+      
+      // GET request to fetch a section
+      if (req.method === 'GET') {
         console.log(`Found section: ${section.title}`);
         return res.end(safeStringify(section));
-      } else {
-        console.log(`Section not found: ${slug}`);
-        return res.status(404).end(safeStringify({ error: 'Section not found' }));
+      }
+      
+      // PUT or PATCH request to update a section
+      if (req.method === 'PUT' || req.method === 'PATCH') {
+        try {
+          // Parse the request body
+          const updates = await parseBody(req);
+          
+          // Update only allowed fields
+          const allowedFields = ['title', 'content', 'icon'];
+          const updatedSection = { ...section };
+          
+          for (const field of allowedFields) {
+            if (updates[field] !== undefined) {
+              updatedSection[field] = updates[field];
+            }
+          }
+          
+          // Always update the timestamp
+          updatedSection.updatedAt = new Date().toISOString();
+          
+          // Save the updated section
+          sections[sectionIndex] = updatedSection;
+          
+          console.log(`Updated section ${updatedSection.id}: ${updatedSection.title}`);
+          return res.status(200).end(safeStringify(updatedSection));
+        } catch (error) {
+          console.error('Error updating section:', error);
+          return res.status(400).end(safeStringify({ error: 'Invalid request body' }));
+        }
+      }
+      
+      // DELETE request (not implemented yet)
+      if (req.method === 'DELETE') {
+        return res.status(501).end(safeStringify({ error: 'Deleting sections is not implemented yet' }));
       }
     }
     
@@ -161,7 +236,12 @@ module.exports = (req, res) => {
       return res.end(safeStringify({
         api: 'BRF Ellagården API',
         version: '1.0.0',
-        endpoints: ['/sections', '/sections/:slug', '/health'],
+        endpoints: [
+          '/sections (GET)',
+          '/sections/:id (GET, PUT, PATCH)',
+          '/sections/:slug (GET)',
+          '/health (GET)'
+        ],
         sections: sections.length
       }));
     }
