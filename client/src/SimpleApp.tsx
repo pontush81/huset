@@ -22,6 +22,9 @@ const Sidebar = ({ sections, activeSectionSlug, setActiveSectionSlug, isMobileMe
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (isOpen: boolean) => void;
 }) => {
+  // Filter out any potentially invalid sections
+  const validSections = sections.filter(section => section && typeof section.id === 'number');
+  
   const handleSectionClick = (slug: string) => {
     setActiveSectionSlug(slug);
     // Close mobile menu when selection is made on small screens
@@ -34,7 +37,7 @@ const Sidebar = ({ sections, activeSectionSlug, setActiveSectionSlug, isMobileMe
     <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:block fixed md:static top-14 left-0 right-0 bottom-0 md:w-64 bg-gray-100 p-4 border-r border-gray-200 overflow-auto z-20`}>
       <div className="font-bold text-xl mb-4">BRF Handbok</div>
       <ul>
-        {sections.map((section) => (
+        {validSections.map((section) => (
           <li key={section.id} className="mb-2">
             <button
               onClick={() => handleSectionClick(section.slug)}
@@ -333,14 +336,26 @@ const localStorageHelpers = {
   },
   
   mergeWithLocalStorage: (apiSections: Section[]): Section[] => {
+    // Ensure we're working with valid sections only
+    const validApiSections = apiSections.filter(section => section && typeof section.id === 'number');
+    
     const localSections = localStorageHelpers.getSavedSections();
     
-    // If no local data, just return API data
-    if (localSections.length === 0) return apiSections;
+    // Filter local sections to ensure they have valid IDs
+    const validLocalSections = localSections.filter(section => section && typeof section.id === 'number');
+    
+    // If no valid local data, just return valid API data
+    if (validLocalSections.length === 0) return validApiSections;
     
     // Merge data - prefer local content when available
-    return apiSections.map(apiSection => {
-      const localSection = localSections.find(s => s.id === apiSection.id);
+    return validApiSections.map(apiSection => {
+      // Make sure we have a valid ID before trying to find matching local section
+      if (!apiSection || typeof apiSection.id !== 'number') {
+        console.warn('Invalid API section encountered during merge:', apiSection);
+        return apiSection; // Just return as is, will be filtered out later
+      }
+      
+      const localSection = validLocalSections.find(s => s.id === apiSection.id);
       if (localSection) {
         return { 
           ...apiSection, 
@@ -460,9 +475,9 @@ const App = () => {
     console.log('Full updated data:', updatedData);
 
     // Always save to localStorage as a backup
-    const updatedSections = sections.map(s => 
-      s.id === updatedData.id ? updatedData : s
-    );
+    const updatedSections = sections
+      .filter(s => s && typeof s.id === 'number') // Filter out invalid sections
+      .map(s => s.id === updatedData.id ? updatedData : s);
     localStorageHelpers.saveSections(updatedSections);
     console.log('Saved to localStorage successfully');
     
@@ -470,7 +485,7 @@ const App = () => {
     if (debugMode || !apiAvailable) {
       console.log('Debug mode or API unavailable - saving locally only');
       
-      // Update sections with the updated one
+      // Update sections with the updated one, but ensure we don't add any invalid sections
       setSections(updatedSections);
       
       // If the active section was updated, update it as well
@@ -619,7 +634,7 @@ const App = () => {
       
       // Update sections with the updated one from API
       setSections(
-        sections.map((s) => (s.id === apiResponseData.id ? apiResponseData : s))
+        sections.map((s) => (s && s.id === apiResponseData.id ? apiResponseData : s))
       );
 
       // If the active section was updated, update it as well
@@ -643,6 +658,9 @@ const App = () => {
     setEditingSection(null);
   };
 
+  // Add defensive coding to filter out invalid sections before any operations
+  const validSections = sections.filter(section => section && typeof section.id === 'number');
+  
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -709,7 +727,7 @@ const App = () => {
       
       <div className="flex flex-1 overflow-hidden">
         <Sidebar 
-          sections={sections} 
+          sections={validSections} 
           activeSectionSlug={activeSectionSlug} 
           setActiveSectionSlug={setActiveSectionSlug}
           isMobileMenuOpen={isMobileMenuOpen}
