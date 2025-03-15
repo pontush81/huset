@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from 'react';
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import SimpleApp from "./SimpleApp";
 import "./index.css";
 
 // Setup error handlers
@@ -57,7 +57,7 @@ function initApp() {
     
     createRoot(container).render(
       <React.StrictMode>
-        <App />
+        <SimpleApp />
       </React.StrictMode>
     );
   } catch (error) {
