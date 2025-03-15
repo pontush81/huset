@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "tsx server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist/server",
-    "vercel-build": "npm i && npm run build:client",
+    "vercel-build": "npm i && npm run build:client && npm run copy-fallbacks",
     "build:client": "vite build --mode production",
+    "copy-fallbacks": "cp -r client/public/*.html client/dist/",
     "start": "NODE_ENV=production node dist/server/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push"

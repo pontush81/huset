@@ -37,6 +37,44 @@
         overflow: auto;
       }
     </style>
+    <!-- Register service worker -->
+    <script>
+      // Register service worker for module error handling
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful with scope:', registration.scope);
+            })
+            .catch(error => {
+              console.error('ServiceWorker registration failed:', error);
+            });
+        });
+      }
+    </script>
+    <!-- Early module error catcher -->
+    <script>
+      // Catch module resolution errors early
+      window.addEventListener('error', function(event) {
+        if (event.message && event.message.includes('Failed to resolve module specifier')) {
+          console.error('Module resolution error:', event);
+          
+          // Extract the problematic module name
+          const moduleMatch = event.message.match(/module specifier ["']([^"']+)["']/);
+          const badModule = moduleMatch ? moduleMatch[1] : 'unknown';
+          
+          // Log to console
+          console.error(`Failed to import module: ${badModule}`);
+          
+          // Redirect to fallback page
+          window.location.href = `/fallback.html?module=${encodeURIComponent(badModule)}`;
+          
+          // Prevent default error handling
+          event.preventDefault();
+          return true;
+        }
+      }, true);
+    </script>
   </head>
   <body>
     <div id="root"></div>
@@ -47,6 +85,10 @@
       <button onclick="window.location.reload()" style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
         Ladda om sidan
       </button>
+      <div>
+        <p>Eller gå till:</p>
+        <a href="/check.html" style="display: inline-block; margin-top: 10px; text-decoration: underline; color: #007bff;">Diagnostik</a>
+      </div>
       <div id="error-log"></div>
     </div>
     <script>

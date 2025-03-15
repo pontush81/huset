@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BRF Ellagården - Fallback Page</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.5;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      color: #333;
+    }
+    
+    .container {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 40px 0;
+    }
+    
+    h1 {
+      margin-top: 0;
+    }
+    
+    .button {
+      display: inline-block;
+      background-color: #0d6efd;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 4px;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      margin-right: 10px;
+    }
+    
+    .diagnostic-button {
+      background-color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>BRF Ellagården</h1>
+    <p>Hemsidan kunde inte laddas på grund av ett tekniskt fel.</p>
+    <p>Vi arbetar med att åtgärda problemet. Försök att ladda om sidan om en stund.</p>
+    
+    <div style="margin-top: 20px;">
+      <button class="button" onclick="window.location.reload()">Ladda om sidan</button>
+      <a href="/check.html" class="button diagnostic-button">Diagnostik</a>
+    </div>
+  </div>
+  
+  <div class="container">
+    <h2>Teknisk information</h2>
+    <p>Fel: Moduler som inte kunde laddas:</p>
+    <pre id="error-details" style="background: #f1f1f1; padding: 10px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap;"></pre>
+    <p>Tidpunkt: <span id="timestamp"></span></p>
+  </div>
+  
+  <script>
+    document.getElementById('timestamp').textContent = new Date().toLocaleString();
+    
+    // Extract error info from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorModule = urlParams.get('module');
+    
+    if (errorModule) {
+      document.getElementById('error-details').textContent = 'Kunde inte ladda modul: ' + errorModule;
+    } else {
+      document.getElementById('error-details').textContent = 'Okänt fel vid laddning av moduler.';
+    }
+  </script>
+</body>
+</html> 

@@ -30,15 +30,31 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "client", "src"),
       "@shared": path.resolve(__dirname, "shared"),
+      // Add aliases for server modules to point to shims
+      "drizzle-zod": path.resolve(__dirname, "client", "src", "lib", "server-module-shims.ts"),
+      "drizzle-orm": path.resolve(__dirname, "client", "src", "lib", "server-module-shims.ts"),
+      "@neondatabase/serverless": path.resolve(__dirname, "client", "src", "lib", "server-module-shims.ts"),
     },
   },
   root: path.resolve(__dirname, "client"),
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    modulePreload: {
+      polyfill: true,
+    },
+    // Avoid bundling server-side dependencies
+    commonjsOptions: {
+      include: [/node_modules/],
+      extensions: ['.js', '.cjs', '.mjs'],
+      exclude: serverOnlyDependencies.map(d => new RegExp(`node_modules/${d}`))
+    },
+    // Add better chunk naming and prevent module resolution errors
     rollupOptions: {
-      external: serverOnlyDependencies,
       output: {
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]',
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
           'ui-components': [
@@ -49,13 +65,19 @@ export default defineConfig({
           ],
           'data-libs': ['@tanstack/react-query']
         }
+      },
+      external: serverOnlyDependencies,
+      onwarn(warning: any, warn: any) {
+        // Ignore "Module level directives" warnings from packages
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') {
+          return;
+        }
+        // Ignore circular dependency warnings
+        if (warning.code === 'CIRCULAR_DEPENDENCY') {
+          return;
+        }
+        warn(warning);
       }
-    },
-    // Avoid bundling server-side dependencies
-    commonjsOptions: {
-      include: [/node_modules/],
-      extensions: ['.js', '.cjs', '.mjs'],
-      exclude: serverOnlyDependencies.map(d => new RegExp(`node_modules/${d}`))
     }
   },
   optimizeDeps: {
