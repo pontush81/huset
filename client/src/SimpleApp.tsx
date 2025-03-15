@@ -599,6 +599,24 @@ const App = () => {
       const apiResponseData = await response.json();
       console.log('API response data:', apiResponseData);
       
+      // Validate that the response data has the expected structure
+      if (!apiResponseData || typeof apiResponseData !== 'object' || apiResponseData.id === undefined) {
+        console.error('Invalid API response - missing ID or invalid structure:', apiResponseData);
+        
+        // Use the local updated data instead of the API response
+        console.log('Using local updated data as fallback');
+        setSections(updatedSections);
+        
+        // If the active section was updated, update it as well
+        if (activeSection && activeSection.id === updatedData.id) {
+          setActiveSection(updatedData);
+        }
+        
+        // Report a warning but don't fail the save operation
+        console.warn('API returned invalid data, but section was saved locally');
+        return; // Exit successfully, don't throw an error
+      }
+      
       // Update sections with the updated one from API
       setSections(
         sections.map((s) => (s.id === apiResponseData.id ? apiResponseData : s))

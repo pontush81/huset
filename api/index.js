@@ -351,11 +351,24 @@ module.exports = async (req, res) => {
               }));
             }
             
-            // Update sections array
-            sections[sectionIndex] = updatedSection;
+            // Extra validation to prevent undefined values in response
+            const validatedSection = {
+              id: updatedSection.id,
+              title: updatedSection.title || section.title,
+              slug: updatedSection.slug || section.slug,
+              content: updatedSection.content !== undefined ? updatedSection.content : section.content,
+              icon: updatedSection.icon || section.icon,
+              updatedAt: updatedSection.updatedAt
+            };
             
-            console.log(`Updated section (admin) ${updatedSection.id}: ${updatedSection.title}`);
-            return res.end(safeStringify(updatedSection));
+            // Extra logging for debugging
+            console.log('Final validated section data being saved:', validatedSection);
+            
+            // Update sections array
+            sections[sectionIndex] = validatedSection;
+            
+            console.log(`Updated section (admin) ${validatedSection.id}: ${validatedSection.title}`);
+            return res.end(safeStringify(validatedSection));
           } catch (error) {
             console.error('Error updating section (admin):', error);
             return res.status(400).end(safeStringify({ 
@@ -503,11 +516,24 @@ module.exports = async (req, res) => {
             }));
           }
           
-          // Update sections array
-          sections[sectionIndex] = updatedSection;
+          // Extra validation to prevent undefined values in response
+          const validatedSection = {
+            id: updatedSection.id,
+            title: updatedSection.title || section.title,
+            slug: updatedSection.slug || section.slug,
+            content: updatedSection.content !== undefined ? updatedSection.content : section.content,
+            icon: updatedSection.icon || section.icon,
+            updatedAt: updatedSection.updatedAt
+          };
           
-          console.log(`Updated section ${updatedSection.id}: ${updatedSection.title}`);
-          return res.end(safeStringify(updatedSection));
+          // Extra logging for debugging
+          console.log('Final validated section data being saved:', validatedSection);
+          
+          // Update sections array
+          sections[sectionIndex] = validatedSection;
+          
+          console.log(`Updated section ${validatedSection.id}: ${validatedSection.title}`);
+          return res.end(safeStringify(validatedSection));
         } catch (error) {
           console.error('Error updating section:', error);
           return res.status(400).end(safeStringify({ 
