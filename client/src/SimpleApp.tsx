@@ -37,6 +37,16 @@ const Sidebar = ({ sections, activeSectionSlug, setActiveSectionSlug }: {
           </li>
         ))}
       </ul>
+      
+      {/* Admin link at the bottom of sidebar */}
+      <div className="mt-8 pt-4 border-t border-gray-200">
+        <a 
+          href="/admin" 
+          className="text-xs text-gray-500 hover:text-gray-700 flex items-center"
+        >
+          <i className="fas fa-cog mr-1"></i> Admin
+        </a>
+      </div>
     </div>
   );
 };
@@ -515,6 +525,18 @@ const App = () => {
           onEditSection={handleEditSection}
         />
       )}
+      
+      {/* Admin footer link - hidden on smaller screens where it would already be in sidebar */}
+      <div className="hidden md:block fixed bottom-2 right-4">
+        <a 
+          href="/admin" 
+          className="text-xs text-gray-400 hover:text-gray-600 flex items-center opacity-60 hover:opacity-100"
+          title="Admin Dashboard"
+        >
+          <i className="fas fa-cog mr-1"></i>
+          <span className="sr-only">Admin</span>
+        </a>
+      </div>
     </div>
   );
 };
