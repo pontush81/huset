@@ -31,9 +31,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
       "@shared": path.resolve(__dirname, "..", "shared"),
       // Add aliases for server modules to point to shims
-      "drizzle-zod": path.resolve(__dirname, "src", "lib", "server-module-shims.ts"),
-      "drizzle-orm": path.resolve(__dirname, "src", "lib", "server-module-shims.ts"),
-      "drizzle-orm/pg-core": path.resolve(__dirname, "src", "lib", "server-module-shims.ts"),
+      "drizzle-zod": path.resolve(__dirname, "src", "lib", "drizzle-zod"),
+      "drizzle-orm": path.resolve(__dirname, "src", "lib", "drizzle-orm"),
+      "drizzle-orm/pg-core": path.resolve(__dirname, "src", "lib", "drizzle-orm", "pg-core"),
       "@neondatabase/serverless": path.resolve(__dirname, "src", "lib", "server-module-shims.ts"),
     },
   },
