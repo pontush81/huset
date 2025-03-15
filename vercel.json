@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "CI=false npm run build:client && npm run copy-fallbacks",
+  "buildCommand": "CI=false npm run build:client && npm run copy-fallbacks || npm run copy-fallbacks",
   "outputDirectory": "client/dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
