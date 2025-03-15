@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +22,9 @@ export default function BookingPage() {
   
   // State för aktuell månad i kalendern
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  
+  // Navigation
+  const [location, setLocation] = useLocation();
   
   return (
     <section className="max-w-5xl mx-auto px-4 pt-6 mb-8">
@@ -74,7 +77,7 @@ export default function BookingPage() {
                       onClick={() => {
                         window.scrollTo({ top: 0, behavior: 'instant' });
                         setTimeout(() => {
-                          window.location.href = "/gastlagenhet";
+                          setLocation("/gastlagenhet");
                         }, 10);
                       }}
                     >
@@ -127,7 +130,7 @@ export default function BookingPage() {
           onClick={() => {
             window.scrollTo({ top: 0, behavior: 'instant' });
             setTimeout(() => {
-              window.location.href = "/";
+              setLocation("/");
             }, 10);
           }}
         >

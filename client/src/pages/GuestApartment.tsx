@@ -12,6 +12,7 @@ import MonthBookings from "@/components/MonthBookings";
 import Calendar from "@/components/Calendar";
 
 import type { RouteComponentProps } from "wouter";
+import { useLocation } from "wouter";
 
 interface GuestApartmentProps extends RouteComponentProps {
   showBookingForm?: boolean;
@@ -22,6 +23,7 @@ export default function GuestApartment({ showBookingForm = false, params }: Gues
   const [infoItems, setInfoItems] = useState<string[]>([]);
   const [mainContent, setMainContent] = useState("");
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [location, setLocation] = useLocation();
   
   // Fetch guest apartment section content
   const { data: section, isLoading } = useQuery<Section>({
@@ -153,7 +155,7 @@ export default function GuestApartment({ showBookingForm = false, params }: Gues
         <Card className="bg-white rounded-lg shadow-md">
           <CardContent className="p-6 text-center py-10">
             <p>Information om gästlägenheten kunde inte hittas.</p>
-            <Button className="mt-4" onClick={() => window.location.href = "/"}>
+            <Button className="mt-4" onClick={() => setLocation("/")}>
               Gå till startsidan
             </Button>
           </CardContent>
@@ -250,7 +252,7 @@ export default function GuestApartment({ showBookingForm = false, params }: Gues
                     window.scrollTo({ top: 0, behavior: 'instant' });
                     // Använd sedan en timeout innan navigation för att säkerställa att scrollningen hinner utföras
                     setTimeout(() => {
-                      window.location.href = "/gastlagenhet/boka";
+                      setLocation("/gastlagenhet/boka");
                     }, 10);
                   }}
                 >
