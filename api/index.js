@@ -140,8 +140,24 @@ function validateAdminAuth(req) {
   
   // Skip auth validation if AUTH_SECRET is not set
   if (!process.env.AUTH_SECRET) {
-    console.warn('Warning: AUTH_SECRET not set. Admin authentication disabled.');
-    return true;
+    console.warn('Warning: AUTH_SECRET not set. Using default password "admin"');
+    
+    // If AUTH_SECRET is not set, check for default password "admin"
+    if (!authHeader) {
+      return false;
+    }
+    
+    // Basic auth format: "Basic base64(username:password)"
+    const base64Credentials = authHeader.split(' ')[1];
+    if (!base64Credentials) {
+      return false;
+    }
+    
+    const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8');
+    const [username, password] = credentials.split(':');
+    
+    // Use "admin" as the default password when AUTH_SECRET is not set
+    return password === 'admin';
   }
   
   if (!authHeader) {
@@ -375,10 +391,50 @@ module.exports = async (req, res) => {
           '/sections/:id (GET, PUT, PATCH, DELETE)',
           '/sections/:slug (GET)',
           '/admin/dashboard (GET)',
+          '/admin/login (POST)',
           '/health (GET)'
         ],
         sections: sections.length
       }));
+    }
+    
+    // Admin login route for testing authentication
+    if (path === '/admin/login' || path === '/admin/login/') {
+      // Only handle POST
+      if (req.method === 'POST') {
+        try {
+          // Parse login data
+          const loginData = await parseBody(req);
+          
+          // If no AUTH_SECRET set, expect "admin" password
+          const expectedPassword = process.env.AUTH_SECRET || 'admin';
+          
+          if (loginData.password === expectedPassword) {
+            return res.status(200).end(safeStringify({
+              success: true,
+              message: 'Authentication successful',
+              authSecret: process.env.AUTH_SECRET ? 'set' : 'not set (using default)'
+            }));
+          } else {
+            return res.status(401).end(safeStringify({
+              success: false,
+              message: 'Invalid password',
+              hint: !process.env.AUTH_SECRET ? 'Default password is "admin" when AUTH_SECRET is not set' : undefined
+            }));
+          }
+        } catch (error) {
+          console.error('Login error:', error);
+          return res.status(400).end(safeStringify({
+            success: false,
+            message: 'Invalid request'
+          }));
+        }
+      } else {
+        return res.status(405).end(safeStringify({
+          success: false,
+          message: 'Method not allowed, use POST'
+        }));
+      }
     }
     
     // Default 404 response

@@ -22,12 +22,47 @@ const AdminDashboard = () => {
   
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [credentials, setCredentials] = useState<AdminCredentials>({ password: '' });
+  const [loginAttempted, setLoginAttempted] = useState(false);
   
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [newSection, setNewSection] = useState<Partial<Section>>({ title: '', content: '', icon: 'fa-file' });
   const [showNewSectionForm, setShowNewSectionForm] = useState(false);
   
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  
+  // Debug functions
+  const debugAuth = async () => {
+    try {
+      // Try regular sections endpoint first to verify API is working
+      console.log("Testing regular API endpoint...");
+      const sectionsResponse = await fetch('/api/sections');
+      console.log("Regular API response status:", sectionsResponse.status);
+      
+      // Now try admin endpoint
+      console.log("Testing admin API endpoint...");
+      const response = await fetch('/api/admin/dashboard', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${btoa(`:${credentials.password}`)}`,
+        },
+      });
+      
+      console.log("Admin API response status:", response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Admin API response data:", data);
+        return true;
+      } else {
+        const errorText = await response.text();
+        console.log("Admin API error:", errorText);
+        return false;
+      }
+    } catch (err) {
+      console.error("Auth debug error:", err);
+      return false;
+    }
+  };
   
   // Clear success message after 3 seconds
   useEffect(() => {
@@ -38,15 +73,92 @@ const AdminDashboard = () => {
       return () => clearTimeout(timer);
     }
   }, [successMessage]);
+  
+  // Check for ?debug=true in URL
+  useEffect(() => {
+    if (window.location.search.includes('debug=true')) {
+      console.log("Admin debug mode enabled");
+      
+      // Enable auto-login for debugging if debug_pass is provided
+      const params = new URLSearchParams(window.location.search);
+      const debugPass = params.get('debug_pass');
+      if (debugPass) {
+        console.log("Using debug password for authentication");
+        setCredentials({ password: debugPass });
+        handleLogin(new Event('submit') as any);
+      }
+    }
+  }, []);
 
   // Authenticate admin
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    setLoginAttempted(true);
+    
+    if (!credentials.password) {
+      setError('Password is required');
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
+      setError(null);
       
-      // Try to fetch dashboard data to test authentication
+      // Debug auth
+      console.log("Attempting to authenticate with:", credentials.password);
+      
+      // Try direct login first (more reliable than dashboard auth)
+      try {
+        const loginResponse = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ password: credentials.password }),
+        });
+        
+        console.log("Direct login response:", loginResponse.status);
+        
+        if (loginResponse.ok) {
+          const loginData = await loginResponse.json();
+          console.log("Login successful:", loginData);
+          
+          // Now fetch the dashboard data
+          await fetchSections();
+          setIsAuthenticated(true);
+          return;
+        } else {
+          // Try to get error message
+          try {
+            const errorData = await loginResponse.json();
+            throw new Error(errorData.message || 'Invalid credentials');
+          } catch (parseErr) {
+            throw new Error(`Login failed (${loginResponse.status}): ${loginResponse.statusText}`);
+          }
+        }
+      } catch (loginErr: any) {
+        console.log("Direct login failed, trying dashboard auth:", loginErr.message);
+        // Continue with dashboard auth as fallback
+      }
+      
+      // First try direct sections fetch to make sure API is accessible
+      try {
+        const testResponse = await fetch('/api/sections');
+        console.log("API test response:", testResponse.status);
+        
+        if (!testResponse.ok) {
+          throw new Error(`API test failed with status ${testResponse.status}`);
+        }
+      } catch (testErr) {
+        console.error("API accessibility test failed:", testErr);
+        setError('Could not connect to API. Make sure the server is running.');
+        setLoading(false);
+        return;
+      }
+      
+      // Now try admin authentication
       const response = await fetch('/api/admin/dashboard', {
         method: 'GET',
         headers: {
@@ -54,18 +166,38 @@ const AdminDashboard = () => {
         },
       });
       
+      console.log("Login response status:", response.status);
+      
       if (response.ok) {
         const data = await response.json();
-        setSections(data.sections);
+        console.log("Login successful, received data:", data);
+        setSections(data.sections || []);
         setIsAuthenticated(true);
         setError(null);
       } else {
-        setError('Invalid admin credentials');
+        // Try to get error message from response
+        let errorMessage = 'Invalid admin credentials';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (parseErr) {
+          // If we can't parse JSON, just use the status text
+          errorMessage = `Authentication failed: ${response.status} ${response.statusText}`;
+        }
+        
+        console.error("Login failed:", errorMessage);
+        setError(errorMessage);
         setIsAuthenticated(false);
+        
+        // If AUTH_SECRET not set, show a special message
+        if (response.status === 401) {
+          debugAuth();
+        }
       }
-    } catch (err) {
-      console.error('Error authenticating:', err);
-      setError('An error occurred during authentication');
+    } catch (err: any) {
+      console.error('Error during authentication:', err);
+      setError(`Authentication error: ${err.message || 'Unknown error'}`);
+      setIsAuthenticated(false);
     } finally {
       setLoading(false);
     }
@@ -224,6 +356,17 @@ const AdminDashboard = () => {
           {error && (
             <div className="bg-red-50 text-red-700 p-3 rounded mb-4 border-l-4 border-red-500">
               {error}
+              {error === 'Invalid admin credentials' && (
+                <p className="mt-2 text-sm">
+                  Make sure the AUTH_SECRET environment variable is set in Vercel.
+                </p>
+              )}
+            </div>
+          )}
+          
+          {loginAttempted && !error && loading && (
+            <div className="bg-blue-50 text-blue-700 p-3 rounded mb-4 border-l-4 border-blue-500">
+              Authenticating, please wait...
             </div>
           )}
           
@@ -240,6 +383,9 @@ const AdminDashboard = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 required
               />
+              <p className="mt-1 text-xs text-gray-500">
+                This should match the AUTH_SECRET environment variable in Vercel.
+              </p>
             </div>
             
             <button
@@ -249,7 +395,30 @@ const AdminDashboard = () => {
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>
+            
+            <div className="mt-4 text-center">
+              <a href="/" className="text-sm text-blue-600 hover:text-blue-800">
+                Return to main site
+              </a>
+            </div>
           </form>
+          
+          <div className="mt-8 pt-4 border-t border-gray-200 text-xs text-gray-500">
+            <p>Having trouble logging in?</p>
+            <ul className="list-disc pl-5 mt-2">
+              <li>Check that you've set the AUTH_SECRET environment variable in Vercel</li>
+              <li>Make sure the API is properly deployed</li>
+              <li>Try using the same password you set in the environment variable</li>
+            </ul>
+            <p className="mt-2">
+              <button 
+                onClick={() => debugAuth()} 
+                className="text-blue-600 hover:underline"
+              >
+                Run Diagnostic Check
+              </button>
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -486,41 +655,49 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {sections.map((section) => (
-                  <tr key={section.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {section.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <i className={`fas ${section.icon} mr-2 text-gray-400`}></i>
-                        <div className="text-sm font-medium text-gray-900">
-                          {section.title}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {section.slug}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(section.updatedAt).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => setEditingSection(sections.find(s => s.id === section.id) || null)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteSection(section.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
+                {sections.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                      {loading ? 'Loading sections...' : 'No sections found'}
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  sections.map((section) => (
+                    <tr key={section.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {section.id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <i className={`fas ${section.icon} mr-2 text-gray-400`}></i>
+                          <div className="text-sm font-medium text-gray-900">
+                            {section.title}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {section.slug}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(section.updatedAt).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => setEditingSection(sections.find(s => s.id === section.id) || null)}
+                          className="text-blue-600 hover:text-blue-900 mr-4"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSection(section.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
