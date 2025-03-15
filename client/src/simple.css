@@ -1,0 +1,125 @@
+/* Basic styles for the app */
+:root {
+  --primary-color: hsl(210, 90%, 30%);
+  --primary-light: hsl(210, 90%, 95%);
+  --background: #ffffff;
+  --foreground: #333333;
+  --secondary: #f3f4f6;
+}
+
+* {
+  box-sizing: border-box;
+  border-color: #e5e7eb;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background);
+  color: var(--foreground);
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+a, button, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+#sidebar {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+}
+
+/* Media queries */
+@media (max-width: 640px) {
+  input, select, textarea, button {
+    font-size: 16px !important;
+  }
+  
+  img, table {
+    max-width: 100%;
+  }
+  
+  a, button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Utility classes */
+.content-wrapper {
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .content-wrapper {
+    padding: 1.5rem;
+  }
+}
+
+.mobile-touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.ios-button-fix {
+  touch-action: manipulation;
+}
+
+.ios-tap-highlight-fix {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.responsive-text {
+  font-size: 0.875rem;
+}
+
+@media (min-width: 768px) {
+  .responsive-text {
+    font-size: 1rem;
+  }
+}
+
+.responsive-heading {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+@media (min-width: 640px) {
+  .responsive-heading {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-heading {
+    font-size: 1.875rem;
+  }
+}
+
+.just-edited {
+  animation: highlight-section 3s ease-out;
+}
+
+@keyframes highlight-section {
+  0% {
+    box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 0px rgba(30, 64, 175, 0);
+  }
+} 

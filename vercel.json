@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "mkdir -p client/dist && npm run vercel-build",
+  "buildCommand": "mkdir -p client/dist && cp client/dist/index.html client/dist/index.html.bak || true && cd client && cp src/simple.css dist/index.css || true && cd .. && npm run copy-fallbacks",
   "outputDirectory": "client/dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
