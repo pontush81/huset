@@ -67,24 +67,31 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
       return;
     }
     
-    // If we're already on the home page, just scroll to the section
+    // Om vi redan är på hemsidan, bara scrolla till sektionen
     if (location === '/' || location === '') {
-      const element = document.getElementById(slug);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        // If element is not found, probably we need to go to home page
-        setLocation(`/#${slug}`);
-      }
+      // Kortare fördröjning för att säkerställa att DOM-elementet finns
+      setTimeout(() => {
+        const element = document.getElementById(slug);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 50);
     } else {
-      // If we're on another page, go to home page with hash
-      setLocation(`/#${slug}`);
+      // Om vi är på en annan sida, gå till hemsidan först
+      setLocation('/');
+      // Vänta tills sidan laddas och scrolla sedan till rätt avsnitt
+      setTimeout(() => {
+        const element = document.getElementById(slug);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
     }
   };
   
-  // Handle admin navigation with direct URL
+  // Handle admin navigation with wouter instead of direct URL
   const handleAdminClick = (path: string) => {
-    window.location.href = path;
+    setLocation(path);
   };
   
   // Close sidebar function
