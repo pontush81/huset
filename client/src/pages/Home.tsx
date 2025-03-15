@@ -13,9 +13,16 @@ export default function Home() {
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   
   // Fetch all sections
-  const { data: sections, isLoading } = useQuery<Section[]>({
+  const { data: sections, isLoading, isError, error } = useQuery<Section[]>({
     queryKey: ['/api/sections'],
+    retry: 3,
+    onError: (err) => console.error('Error fetching sections:', err)
   });
+  
+  // Debug sections data
+  useEffect(() => {
+    console.log('Home sections data:', sections);
+  }, [sections]);
   
   // Handle scrolling to section based on URL hash
   useEffect(() => {

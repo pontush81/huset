@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist/server",
-    "vercel-build": "npm install && npm install -D @types/node @types/express vite typescript && vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=api",
+    "vercel-build": "npm install && npm install -D @types/node @types/express vite typescript && vite build --mode production && esbuild server/index.ts api/index.ts --platform=node --packages=external --bundle --format=esm --outdir=api",
     "start": "NODE_ENV=production node dist/server/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push"

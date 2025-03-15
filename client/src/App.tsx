@@ -8,6 +8,15 @@ import Home from "@/pages/Home";
 import GuestApartment from "@/pages/GuestApartment";
 import BookingPage from "@/pages/BookingPage";
 import AdminDashboard from "@/pages/AdminDashboard";
+import Debug from "@/components/Debug";
+
+// Only show debug in development or if forced via URL parameter
+const showDebug = () => {
+  const isDevMode = process.env.NODE_ENV === 'development';
+  const urlParams = new URLSearchParams(window.location.search);
+  const debugParam = urlParams.get('debug');
+  return isDevMode || debugParam === 'true';
+};
 
 function Router() {
   return (
@@ -38,6 +47,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router />
       <Toaster />
+      {<Debug />}
     </QueryClientProvider>
   );
 }

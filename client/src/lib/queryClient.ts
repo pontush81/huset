@@ -21,7 +21,14 @@ export async function apiRequest<T = any>(
     headers['Content-Type'] = 'application/json';
   }
 
-  const res = await fetch(url, {
+  // Fix API url path for production environment
+  const apiUrl = url.startsWith('/api/') 
+    ? (window.location.hostname === 'localhost' ? url : `/api${url.substring(4)}`)
+    : url;
+  
+  console.log('Making API request to:', apiUrl);
+
+  const res = await fetch(apiUrl, {
     method,
     headers,
     body: isFormData ? data as FormData : data ? JSON.stringify(data) : undefined,
