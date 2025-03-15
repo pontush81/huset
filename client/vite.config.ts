@@ -22,9 +22,30 @@ const serverOnlyDependencies = [
   'passport-local'
 ];
 
+// Create a plugin to handle server-side module imports
+const serverModulesPlugin = () => {
+  return {
+    name: 'server-modules-plugin',
+    resolveId(id) {
+      // Check if this is a server-only module
+      if (id === 'drizzle-zod' || id.startsWith('drizzle-zod/')) {
+        return path.resolve(__dirname, 'src/lib/drizzle-zod/index.ts');
+      }
+      if (id === 'drizzle-orm/pg-core') {
+        return path.resolve(__dirname, 'src/lib/drizzle-orm/pg-core/index.ts');
+      }
+      if (id === 'drizzle-orm' || id.startsWith('drizzle-orm/')) {
+        return path.resolve(__dirname, 'src/lib/drizzle-orm/index.ts');
+      }
+      return null;
+    }
+  };
+};
+
 export default defineConfig({
   plugins: [
     react(),
+    serverModulesPlugin(),
   ],
   resolve: {
     alias: {

@@ -19,11 +19,30 @@ export const createSelectSchema = () => {
   };
 };
 
-// Export a mock version of the module
-export default {
+// Add any other exports that might be used
+export const zodTable = () => ({});
+export const z = {
+  infer: (schema: any) => ({}),
+  object: () => ({
+    pick: () => ({}),
+    omit: () => ({})
+  }),
+  string: () => ({}),
+  number: () => ({}),
+  boolean: () => ({}),
+  date: () => ({}),
+  array: () => ({})
+};
+
+// Export everything as default export as well to handle different import styles
+const drizzleZod = {
   createInsertSchema,
   createSelectSchema,
+  zodTable,
+  z
 };
+
+export default drizzleZod;
 
 // Module warning
 console.warn("drizzle-zod shim is being used - server modules should not be imported in client code"); 

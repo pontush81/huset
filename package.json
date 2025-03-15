@@ -7,7 +7,7 @@
     "dev": "tsx server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist/server",
     "vercel-build": "mkdir -p client/dist && npm run build:client && npm run copy-fallbacks",
-    "build:client": "cd client && VITE_IGNORE_WARNINGS=true NODE_ENV=production NODE_OPTIONS='--max-old-space-size=4096' vite build --mode production",
+    "build:client": "chmod +x ./fix-modules.sh && ./fix-modules.sh && cd client && VITE_IGNORE_WARNINGS=true NODE_ENV=production NODE_OPTIONS='--max-old-space-size=4096' vite build --mode production",
     "copy-fallbacks": "mkdir -p client/dist && cp -r client/public/*.html client/dist/ || true",
     "start": "NODE_ENV=production node dist/server/index.js",
     "check": "tsc",
