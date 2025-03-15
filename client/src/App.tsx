@@ -7,7 +7,6 @@ import Layout from "@/components/Layout";
 import Home from "@/pages/Home";
 import GuestApartment from "@/pages/GuestApartment";
 import BookingPage from "@/pages/BookingPage";
-import ManageBookings from "@/pages/ManageBookings";
 import AdminDashboard from "@/pages/AdminDashboard";
 
 function Router() {
@@ -17,8 +16,14 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/gastlagenhet" component={GuestApartment} />
         <Route path="/gastlagenhet/boka" component={BookingPage} />
-        <Route path="/admin/bokningar" component={ManageBookings} />
         <Route path="/admin/dashboard" component={AdminDashboard} />
+        {/* Omdirigera gamla admin/bokningar till nya bokningssidan */}
+        <Route path="/admin/bokningar">
+          {() => {
+            window.location.href = "/gastlagenhet/boka";
+            return null;
+          }}
+        </Route>
         <Route path="/#:section" component={Home} />
         <Route path="/:section" component={Home} />
         <Route component={NotFound} />

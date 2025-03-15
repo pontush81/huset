@@ -226,30 +226,7 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
                       <span className="truncate">Admin Dashboard</span>
                     </button>
                   </li>
-                  <li>
-                    <button 
-                      onClick={() => {
-                        handleAdminClick('/admin/bokningar');
-                        if (window.innerWidth < 768) {
-                          closeSidebar();
-                        }
-                      }}
-                      style={{
-                        textAlign: 'left', 
-                        width: '100%', 
-                        backgroundColor: location.includes("/admin/bokningar") ? '#f3f4f6' : 'white',
-                        justifyContent: 'flex-start'
-                      }}
-                      className={`flex items-center text-sm md:text-base py-3 px-3 md:px-3 rounded touch-manipulation ${
-                        location.includes("/admin/bokningar") 
-                          ? 'bg-secondary font-medium' 
-                          : 'hover:bg-secondary'
-                      } transition-colors duration-200 ios-tap-highlight-fix`}
-                    >
-                      <i className="fas fa-calendar-alt mr-2 text-primary w-5 text-center"></i>
-                      <span className="truncate">Bokningar</span>
-                    </button>
-                  </li>
+
                 </ul>
               </nav>
             </div>

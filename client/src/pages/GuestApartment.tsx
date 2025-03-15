@@ -250,11 +250,11 @@ export default function GuestApartment({ showBookingForm = false, params }: Gues
                     window.scrollTo({ top: 0, behavior: 'instant' });
                     // Använd sedan en timeout innan navigation för att säkerställa att scrollningen hinner utföras
                     setTimeout(() => {
-                      window.location.href = "/admin/bokningar";
+                      window.location.href = "/gastlagenhet/boka";
                     }, 10);
                   }}
                 >
-                  Gå till bokningsadministration
+                  Hantera bokningar
                 </Button>
               </div>
             </div>

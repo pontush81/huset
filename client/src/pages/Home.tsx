@@ -185,7 +185,7 @@ export default function Home() {
                     }, 10);
                   }}
                 >
-                  Gå till bokningsformuläret
+                  Boka och hantera gästlägenheten
                 </Button>
               </div>
             </CardContent>
