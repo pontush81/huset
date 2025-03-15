@@ -63,7 +63,7 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
   const handleNavClick = (slug: string) => {
     // Special case for guest apartment (always go to dedicated page)
     if (slug === "gastlagenhet") {
-      window.location.href = `/gastlagenhet`;
+      setLocation('/gastlagenhet');
       return;
     }
     
@@ -74,11 +74,11 @@ export default function Sidebar({ isOpen, currentSection }: SidebarProps) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else {
         // If element is not found, probably we need to go to home page
-        window.location.href = `/#${slug}`;
+        setLocation(`/#${slug}`);
       }
     } else {
       // If we're on another page, go to home page with hash
-      window.location.href = `/#${slug}`;
+      setLocation(`/#${slug}`);
     }
   };
   

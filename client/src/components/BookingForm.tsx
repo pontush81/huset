@@ -215,7 +215,7 @@ export default function BookingForm() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ditt namn</FormLabel>
+                  <FormLabel>Gästens namn</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
