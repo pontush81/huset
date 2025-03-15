@@ -77,19 +77,21 @@ const EditSection = ({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [savedLocally, setSavedLocally] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
     setSaveSuccess(false);
+    setSavedLocally(false);
 
     try {
       await onSave({ content });
       // If we reach here, the save was successful
       setSaveSuccess(true);
       
-      // If in debug mode, don't dismiss the form
+      // If in debug mode, keep the form open
       if (!debugMode) {
         setTimeout(() => {
           onCancel();
@@ -99,6 +101,15 @@ const EditSection = ({
       console.error('Error saving section:', err);
       setError(err.message || "Det gick inte att spara ändringarna. Försök igen.");
       setSaving(false);
+      
+      // Check if error message indicates local saving
+      if (err.message && (
+        err.message.includes('sparats lokalt') || 
+        err.message.includes('404') || 
+        err.message.includes('401')
+      )) {
+        setSavedLocally(true);
+      }
     }
   };
 
@@ -108,11 +119,11 @@ const EditSection = ({
       
       {error && (
         <div className="bg-red-50 text-red-700 p-3 rounded mb-4 border-l-4 border-red-500">
-          <p className="font-bold">Det uppstod ett fel:</p>
+          <p className="font-bold">Meddelande:</p>
           <p>{error}</p>
           {error.includes('404') && (
             <p className="mt-2 text-sm">
-              API-slutpunkten för att spara saknas. Dina ändringar kommer att sparas lokalt istället.
+              API-slutpunkten för att spara kunde inte hittas. Dina ändringar sparas automatiskt lokalt i webbläsaren istället.
             </p>
           )}
         </div>
@@ -120,8 +131,20 @@ const EditSection = ({
       
       {saveSuccess && (
         <div className="bg-green-50 text-green-700 p-3 rounded mb-4 border-l-4 border-green-500">
-          <p>Ändringarna har sparats!</p>
-          {debugMode && <p className="text-sm mt-1">(Ändringarna sparades lokalt)</p>}
+          <p className="font-bold">Sparat!</p>
+          {savedLocally ? (
+            <p>Ändringarna har sparats lokalt i webbläsaren och kommer att visas när du återkommer till sidan.</p>
+          ) : (
+            <p>Ändringarna har sparats till servern.</p>
+          )}
+          {debugMode && <p className="text-sm mt-1">(Debug-läge är aktivt)</p>}
+        </div>
+      )}
+      
+      {debugMode && !error && !saveSuccess && (
+        <div className="bg-blue-50 text-blue-700 p-3 rounded mb-4 border-l-4 border-blue-500">
+          <p className="font-bold">Debug-läge är aktivt</p>
+          <p>Ändringar kommer att sparas lokalt i din webbläsare.</p>
         </div>
       )}
       
@@ -165,6 +188,7 @@ const EditSection = ({
             <p>Section Slug: {section.slug}</p>
             <p>Content Length: {content.length} characters</p>
             <p>Local Storage Active: Yes</p>
+            <p>Saved Locally: {savedLocally ? 'Yes' : 'No'}</p>
           </div>
         )}
       </form>
@@ -291,6 +315,23 @@ const localStorageHelpers = {
     }
   },
   
+  getAuthToken: (): string | null => {
+    try {
+      return localStorage.getItem('brf_handbook_auth_token');
+    } catch (err) {
+      console.error('Failed to get auth token from localStorage:', err);
+      return null;
+    }
+  },
+  
+  saveAuthToken: (token: string): void => {
+    try {
+      localStorage.setItem('brf_handbook_auth_token', token);
+    } catch (err) {
+      console.error('Failed to save auth token to localStorage:', err);
+    }
+  },
+  
   mergeWithLocalStorage: (apiSections: Section[]): Section[] => {
     const localSections = localStorageHelpers.getSavedSections();
     
@@ -325,12 +366,24 @@ const App = () => {
   
   // New state for mobile menu
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Auth token state
+  const [authToken, setAuthToken] = useState<string | null>(localStorageHelpers.getAuthToken());
 
   // Check for debug mode
   useEffect(() => {
     if (window.location.search.includes('debug=true')) {
       setDebugMode(true);
       console.log('Debug mode enabled via URL');
+    }
+    
+    // Check for auth token in URL if present
+    const params = new URLSearchParams(window.location.search);
+    const tokenFromUrl = params.get('auth_token');
+    if (tokenFromUrl) {
+      console.log('Auth token found in URL, saving');
+      setAuthToken(tokenFromUrl);
+      localStorageHelpers.saveAuthToken(tokenFromUrl);
     }
     
     // Check for existing local storage data
@@ -421,24 +474,51 @@ const App = () => {
     
     // If not in debug mode, try API
     try {
-      // First, attempt to use the official API endpoint
-      let response = await fetch(`/api/sections/${editingSection.id}`, {
+      // Create headers with auth token if available
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (authToken) {
+        headers['Authorization'] = `Basic ${btoa(`:${authToken}`)}`;
+      }
+      
+      // First, attempt to use the official admin API endpoint
+      console.log('Trying to save to admin API endpoint...');
+      let response = await fetch(`/api/admin/sections/${editingSection.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(updatedSection),
       });
 
       // If the PATCH method is not supported, try PUT instead
       if (response.status === 405) { // Method Not Allowed
         console.log('PATCH not supported, trying PUT instead');
-        response = await fetch(`/api/sections/${editingSection.id}`, {
+        response = await fetch(`/api/admin/sections/${editingSection.id}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
           body: JSON.stringify(updatedData),
+        });
+      }
+      
+      // If auth is required but missing or invalid
+      if (response.status === 401) {
+        console.log('Authentication required, trying non-admin endpoint');
+        // Fall back to regular endpoint without auth
+        response = await fetch(`/api/sections/${editingSection.id}`, {
+          method: 'PATCH',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(updatedSection),
+        });
+      }
+
+      // If admin endpoint not found, try standard endpoint
+      if (response.status === 404) {
+        console.log('Admin API endpoint not found, trying standard endpoint...');
+        response = await fetch(`/api/sections/${editingSection.id}`, {
+          method: 'PATCH',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(updatedSection),
         });
       }
 
@@ -459,9 +539,11 @@ const App = () => {
           }
           
           // Throw error for UI feedback
-          throw new Error(`API-slutpunkten hittades inte (404). Dina ändringar har sparats lokalt istället.`);
+          throw new Error(`API-slutpunkten för att spara hittades inte (404). Dina ändringar har sparats lokalt i webbläsaren istället och kommer att finnas kvar när du återkommer till sidan.`);
+        } else if (response.status === 401) {
+          throw new Error(`Autentisering krävs (401). Dina ändringar har sparats lokalt i webbläsaren istället. Logga in som administratör för att spara permanent.`);
         } else {
-          throw new Error(`Kunde inte spara (${response.status}): ${response.statusText}`);
+          throw new Error(`Kunde inte spara till servern (${response.status}): ${response.statusText}. Dina ändringar har sparats lokalt i webbläsaren istället.`);
         }
       }
 
