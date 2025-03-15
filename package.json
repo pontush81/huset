@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "tsx server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist/server",
-    "vercel-build": "npm install -D @types/node @types/express vite typescript && NODE_ENV=production npm run build:api && NODE_ENV=production npm run build:client",
-    "build:api": "esbuild api/index-simple.ts --platform=node --packages=external --bundle --format=esm --outfile=api/index.js",
+    "vercel-build": "npm i && npm run build:client",
     "build:client": "vite build --mode production",
     "start": "NODE_ENV=production node dist/server/index.js",
     "check": "tsc",

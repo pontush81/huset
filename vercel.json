@@ -1,17 +1,8 @@
 {
   "version": 2,
-  "framework": null,
-  "functions": {
-    "api/index.js": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
-  "buildCommand": "npm run vercel-build",
+  "buildCommand": "npm run build:client",
   "outputDirectory": "client/dist",
-  "installCommand": "npm install",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.js" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/(.*)", "destination": "/api" }
   ]
 } 

@@ -7,6 +7,13 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Helper function to normalize API URLs for both development and production
+function normalizeApiUrl(url: string): string {
+  return url.startsWith('/api/') 
+    ? (window.location.hostname === 'localhost' ? url : `/api${url.substring(4)}`)
+    : url;
+}
+
 export async function apiRequest<T = any>(
   method: string,
   url: string,
@@ -22,9 +29,7 @@ export async function apiRequest<T = any>(
   }
 
   // Fix API url path for production environment
-  const apiUrl = url.startsWith('/api/') 
-    ? (window.location.hostname === 'localhost' ? url : `/api${url.substring(4)}`)
-    : url;
+  const apiUrl = normalizeApiUrl(url);
   
   console.log('Making API request to:', apiUrl);
 
@@ -64,7 +69,11 @@ export const getQueryFn: <T>(options: {
       }
     }
     
-    const res = await fetch(url, {
+    // Fix API url path for production environment
+    const apiUrl = normalizeApiUrl(url);
+    console.log('Query function requesting:', apiUrl);
+    
+    const res = await fetch(apiUrl, {
       credentials: "include",
     });
 

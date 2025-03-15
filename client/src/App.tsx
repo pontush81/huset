@@ -10,12 +10,9 @@ import BookingPage from "@/pages/BookingPage";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Debug from "@/components/Debug";
 
-// Only show debug in development or if forced via URL parameter
+// Always show debug for now to troubleshoot Vercel deployment
 const showDebug = () => {
-  const isDevMode = process.env.NODE_ENV === 'development';
-  const urlParams = new URLSearchParams(window.location.search);
-  const debugParam = urlParams.get('debug');
-  return isDevMode || debugParam === 'true';
+  return true; // Always show for now
 };
 
 function Router() {
@@ -47,7 +44,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router />
       <Toaster />
-      {<Debug />}
+      <Debug />
     </QueryClientProvider>
   );
 }

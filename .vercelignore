@@ -1,0 +1,39 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# TypeScript sources (compiled versions are used)
+server/**/*.ts
+!server/**/*.d.ts
+api/**/*.ts
+!api/**/*.d.ts
+
+# Editor and environment
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.env
+.env.*
+!.env.example
+
+# Build artifacts that aren't needed in production
+drizzle
+
+# Development resources
+*.md
+.github
+.vscode 
