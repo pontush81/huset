@@ -75,10 +75,7 @@ export default function BookingPage() {
                       variant="outline" 
                       className="w-full"
                       onClick={() => {
-                        window.scrollTo({ top: 0, behavior: 'instant' });
-                        setTimeout(() => {
-                          setLocation("/gastlagenhet");
-                        }, 10);
+                        setLocation("/gastlagenhet");
                       }}
                     >
                       Läs mer om gästlägenheten
@@ -128,10 +125,7 @@ export default function BookingPage() {
         <Button 
           variant="ghost" 
           onClick={() => {
-            window.scrollTo({ top: 0, behavior: 'instant' });
-            setTimeout(() => {
-              setLocation("/");
-            }, 10);
+            setLocation("/");
           }}
         >
           <i className="fas fa-home mr-2"></i>
