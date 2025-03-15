@@ -444,18 +444,27 @@ const App = () => {
   const handleSaveSection = async (updatedSection: Partial<Section>) => {
     if (!editingSection) return;
     
+    console.log('==== SAVE SECTION DEBUGGING ====');
+    console.log('EditingSection:', editingSection);
+    console.log('UpdatedSection:', updatedSection);
+    console.log('API availability:', apiAvailable ? 'API should be available' : 'API marked as unavailable');
+    console.log('Debug mode:', debugMode ? 'Enabled' : 'Disabled');
+    console.log('Auth token:', authToken ? 'Present' : 'Not present');
+    
     // Create an updated section object
     const updatedData = {
       ...editingSection,
       ...updatedSection,
       updatedAt: new Date().toISOString()
     };
+    console.log('Full updated data:', updatedData);
 
     // Always save to localStorage as a backup
     const updatedSections = sections.map(s => 
       s.id === updatedData.id ? updatedData : s
     );
     localStorageHelpers.saveSections(updatedSections);
+    console.log('Saved to localStorage successfully');
     
     // If debug mode is active or API previously failed, use local storage only
     if (debugMode || !apiAvailable) {
@@ -481,15 +490,40 @@ const App = () => {
       
       if (authToken) {
         headers['Authorization'] = `Basic ${btoa(`:${authToken}`)}`;
+        console.log('Added Authorization header to request');
+      } else {
+        console.log('No auth token available, not adding Authorization header');
+      }
+      
+      // First, run a health check to see if API is responding
+      console.log('Checking API health...');
+      try {
+        const healthCheck = await fetch('/api/health');
+        if (healthCheck.ok) {
+          const healthData = await healthCheck.json();
+          console.log('API health check OK:', healthData);
+        } else {
+          console.error('API health check failed:', healthCheck.status, healthCheck.statusText);
+        }
+      } catch (healthErr) {
+        console.error('API health check error:', healthErr);
       }
       
       // First, attempt to use the official admin API endpoint
       console.log('Trying to save to admin API endpoint...');
+      console.log('Request URL:', `/api/admin/sections/${editingSection.id}`);
+      console.log('Request method:', 'PATCH');
+      console.log('Request headers:', headers);
+      console.log('Request body:', JSON.stringify(updatedSection));
+      
       let response = await fetch(`/api/admin/sections/${editingSection.id}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify(updatedSection),
       });
+      
+      console.log('Initial response status:', response.status);
+      console.log('Initial response status text:', response.statusText);
 
       // If the PATCH method is not supported, try PUT instead
       if (response.status === 405) { // Method Not Allowed
@@ -499,6 +533,7 @@ const App = () => {
           headers,
           body: JSON.stringify(updatedData),
         });
+        console.log('PUT response status:', response.status);
       }
       
       // If auth is required but missing or invalid
@@ -510,6 +545,7 @@ const App = () => {
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(updatedSection),
         });
+        console.log('Non-admin endpoint response status:', response.status);
       }
 
       // If admin endpoint not found, try standard endpoint
@@ -520,10 +556,21 @@ const App = () => {
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(updatedSection),
         });
+        console.log('Standard endpoint response status:', response.status);
       }
 
       // If we still get an error, switch to local storage mode
       if (!response.ok) {
+        console.log('API request failed with status:', response.status);
+        
+        try {
+          // Try to get the error message from the response
+          const errorBody = await response.text();
+          console.log('Error response body:', errorBody);
+        } catch (parseErr) {
+          console.log('Could not parse error response body');
+        }
+        
         if (response.status === 404) {
           // API endpoint not found - automatically switch to local storage mode
           console.log('API endpoint not found (404) - activating local storage mode');
@@ -548,7 +595,9 @@ const App = () => {
       }
 
       // Parse the response from the API
+      console.log('API request successful, parsing response...');
       const apiResponseData = await response.json();
+      console.log('API response data:', apiResponseData);
       
       // Update sections with the updated one from API
       setSections(
@@ -559,8 +608,14 @@ const App = () => {
       if (activeSection && activeSection.id === apiResponseData.id) {
         setActiveSection(apiResponseData);
       }
+      
+      console.log('Section successfully updated via API');
 
     } catch (err: any) {
+      console.error('==== ERROR SAVING SECTION ====');
+      console.error('Error type:', err.constructor.name);
+      console.error('Error message:', err.message);
+      console.error('Error stack:', err.stack);
       console.error('Error updating section:', err);
       throw err;
     }
