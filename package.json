@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "tsx server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist/server",
-    "vercel-build": "npm i && CI=false npm run build:client && npm run copy-fallbacks",
-    "build:client": "cd client && vite build --mode production",
-    "copy-fallbacks": "cp -r client/public/*.html client/dist/",
+    "vercel-build": "npm i && mkdir -p client/dist && npm run build:client && npm run copy-fallbacks",
+    "build:client": "cd client && CI=false VITE_IGNORE_WARNINGS=true vite build --mode production",
+    "copy-fallbacks": "mkdir -p client/dist && cp -r client/public/*.html client/dist/ || echo 'No fallback files to copy'",
     "start": "NODE_ENV=production node dist/server/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push"

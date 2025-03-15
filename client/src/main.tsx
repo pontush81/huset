@@ -16,7 +16,10 @@ if (typeof window !== 'undefined') {
       configurable: true,
       get: () => {
         console.error(`Error: ${moduleName} is a server-only module and cannot be used in client code`);
-        document.getElementById('loading')?.style.display = 'block';
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+          loadingElement.style.display = 'block';
+        }
         throw new Error(`Server module "${moduleName}" cannot be used in browser`);
       }
     });
@@ -35,7 +38,10 @@ if (typeof window !== 'undefined') {
       const errorLog = document.getElementById('error-log');
       if (errorLog) {
         errorLog.textContent = `Failed to load module: ${moduleName}\n${event.message}`;
-        document.getElementById('loading')?.style.display = 'block';
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+          loadingElement.style.display = 'block';
+        }
       }
     }
   });

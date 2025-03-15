@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "CI=false npm run build:client && npm run copy-fallbacks || npm run copy-fallbacks",
+  "buildCommand": "mkdir -p client/dist && npm run vercel-build",
   "outputDirectory": "client/dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
