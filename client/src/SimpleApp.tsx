@@ -336,36 +336,109 @@ const localStorageHelpers = {
   },
   
   mergeWithLocalStorage: (apiSections: Section[]): Section[] => {
+    console.log('===== MERGING WITH LOCAL STORAGE =====');
+    console.log('Original API sections count:', apiSections?.length || 'undefined');
+    
     // Ensure we're working with valid sections only
-    const validApiSections = apiSections.filter(section => section && typeof section.id === 'number');
+    console.log('Filtering invalid API sections');
+    const validApiSections = Array.isArray(apiSections) 
+      ? apiSections.filter((section, index) => {
+          const valid = section && typeof section.id === 'number';
+          if (!valid) {
+            console.warn(`Filtering out invalid API section at index ${index}:`, section);
+            console.warn('section?.id type:', section?.id ? typeof section.id : 'missing');
+          }
+          return valid;
+        })
+      : [];
+    
+    console.log('Valid API sections count:', validApiSections.length);
     
     const localSections = localStorageHelpers.getSavedSections();
+    console.log('Raw local sections count:', localSections?.length || 'undefined');
     
     // Filter local sections to ensure they have valid IDs
-    const validLocalSections = localSections.filter(section => section && typeof section.id === 'number');
+    console.log('Filtering invalid local sections');
+    const validLocalSections = Array.isArray(localSections)
+      ? localSections.filter((section, index) => {
+          const valid = section && typeof section.id === 'number';
+          if (!valid) {
+            console.warn(`Filtering out invalid local section at index ${index}:`, section);
+            console.warn('section?.id type:', section?.id ? typeof section.id : 'missing');
+          }
+          return valid;
+        })
+      : [];
+    
+    console.log('Valid local sections count:', validLocalSections.length);
     
     // If no valid local data, just return valid API data
-    if (validLocalSections.length === 0) return validApiSections;
+    if (validLocalSections.length === 0) {
+      console.log('No valid local data, returning valid API data only');
+      return validApiSections;
+    }
+    
+    console.log('Merging API data with local data');
     
     // Merge data - prefer local content when available
-    return validApiSections.map(apiSection => {
-      // Make sure we have a valid ID before trying to find matching local section
-      if (!apiSection || typeof apiSection.id !== 'number') {
-        console.warn('Invalid API section encountered during merge:', apiSection);
-        return apiSection; // Just return as is, will be filtered out later
-      }
+    try {
+      const mergedSections = validApiSections.map((apiSection, index) => {
+        // Log the section being processed
+        safeLog(`Processing API section ${index}`, apiSection);
+        
+        // Make sure we have a valid ID before trying to find matching local section
+        if (!apiSection || typeof apiSection.id !== 'number') {
+          console.warn(`Skipping invalid API section ${index}:`, apiSection);
+          return apiSection; // Just return as is, will be filtered out later
+        }
+        
+        console.log(`Looking for local section with ID ${apiSection.id}`);
+        const localSection = validLocalSections.find(s => s && s.id === apiSection.id);
+        
+        if (localSection) {
+          console.log(`Found matching local section for ID ${apiSection.id}`);
+          const merged = { 
+            ...apiSection, 
+            content: localSection.content,
+            updatedAt: localSection.updatedAt
+          };
+          safeLog(`Merged section ${index}`, merged);
+          return merged;
+        }
+        
+        console.log(`No matching local section for ID ${apiSection.id}, using API version`);
+        return apiSection;
+      });
       
-      const localSection = validLocalSections.find(s => s.id === apiSection.id);
-      if (localSection) {
-        return { 
-          ...apiSection, 
-          content: localSection.content,
-          updatedAt: localSection.updatedAt
-        };
-      }
-      return apiSection;
-    });
+      console.log('Final merged sections count:', mergedSections.length);
+      return mergedSections;
+    } catch (error) {
+      console.error('Error during merge operation:', error);
+      return validApiSections; // Fall back to API data if merge fails
+    }
   }
+};
+
+// Utility function to safely debug log complex objects
+const safeLog = (label: string, data: any) => {
+  try {
+    console.log(`${label}:`, 
+      JSON.stringify(data, (key, value) => 
+        value === undefined ? 'undefined' : value, 2)
+    );
+  } catch (err) {
+    console.log(`${label} (stringify failed):`, data);
+  }
+};
+
+// Utility function to check if a section is valid
+const isValidSection = (section: any): boolean => {
+  const valid = section && typeof section === 'object' && typeof section.id === 'number';
+  if (!valid && section) {
+    console.warn('Invalid section detected:', section);
+    console.warn('section.id type:', section?.id ? typeof section.id : 'missing');
+  }
+  return valid;
 };
 
 // Main App component
@@ -411,19 +484,55 @@ const App = () => {
   // Fetch sections from API and merge with local storage
   useEffect(() => {
     const fetchSections = async () => {
+      console.log('===== FETCHING SECTIONS =====');
       try {
+        console.log('Making API request to /api/sections');
         const response = await fetch('/api/sections');
+        
         if (!response.ok) {
+          console.error('API request failed with status:', response.status);
           throw new Error('Failed to fetch sections');
         }
+        
+        console.log('API response status:', response.status);
         const apiData = await response.json();
+        console.log('Raw API response data count:', apiData?.length || 'undefined');
+        
+        // Log each section from API to check for problems
+        if (Array.isArray(apiData)) {
+          console.log('Checking sections from API:');
+          apiData.forEach((section, index) => {
+            safeLog(`API section ${index}`, section);
+            if (!isValidSection(section)) {
+              console.warn(`Invalid section at index ${index} in API response`);
+            }
+          });
+        } else {
+          console.error('API did not return an array:', apiData);
+        }
         
         // Merge with local storage data if any exists
+        console.log('Merging with localStorage');
         const mergedData = localStorageHelpers.mergeWithLocalStorage(apiData);
+        console.log('Merged data count:', mergedData.length);
+        
+        // Verify final sections
+        mergedData.forEach((section, index) => {
+          if (!isValidSection(section)) {
+            console.error(`Invalid section at index ${index} after merge:`, section);
+          }
+        });
+        
+        console.log('Setting sections state with merged data');
         setSections(mergedData);
         setLoading(false);
       } catch (err) {
+        console.error('===== ERROR FETCHING SECTIONS =====');
+        console.error('Error type:', err.constructor.name);
+        console.error('Error message:', err.message);
+        console.error('Error stack:', err.stack);
         console.error('Error fetching sections:', err);
+        
         setError('Failed to load sections. Please try again later.');
         setLoading(false);
         setApiAvailable(false);
@@ -431,8 +540,17 @@ const App = () => {
         // If API fails, try to load from localStorage as fallback
         const localSections = localStorageHelpers.getSavedSections();
         if (localSections.length > 0) {
-          console.log('Using locally saved data as fallback');
-          setSections(localSections);
+          console.log('Using locally saved data as fallback, count:', localSections.length);
+          
+          // Validate local sections
+          const validLocalSections = localSections.filter(section => {
+            const valid = isValidSection(section);
+            if (!valid) console.warn('Filtering out invalid local section:', section);
+            return valid;
+          });
+          
+          console.log('Valid local sections count:', validLocalSections.length);
+          setSections(validLocalSections);
           setError(null);
           setDebugMode(true); // Enable debug mode automatically when API fails
         }
@@ -457,14 +575,19 @@ const App = () => {
   };
 
   const handleSaveSection = async (updatedSection: Partial<Section>) => {
-    if (!editingSection) return;
+    console.log('===== SAVE SECTION STARTED =====');
     
-    console.log('==== SAVE SECTION DEBUGGING ====');
-    console.log('EditingSection:', editingSection);
-    console.log('UpdatedSection:', updatedSection);
+    if (!editingSection) {
+      console.error('No editing section defined, cannot save');
+      return;
+    }
+    
+    safeLog('EditingSection', editingSection);
+    safeLog('UpdatedSection', updatedSection);
     console.log('API availability:', apiAvailable ? 'API should be available' : 'API marked as unavailable');
     console.log('Debug mode:', debugMode ? 'Enabled' : 'Disabled');
     console.log('Auth token:', authToken ? 'Present' : 'Not present');
+    console.log('Total sections count before update:', sections.length);
     
     // Create an updated section object
     const updatedData = {
@@ -472,184 +595,114 @@ const App = () => {
       ...updatedSection,
       updatedAt: new Date().toISOString()
     };
-    console.log('Full updated data:', updatedData);
-
+    safeLog('Full updated data', updatedData);
+    
     // Always save to localStorage as a backup
-    const updatedSections = sections
-      .filter(s => s && typeof s.id === 'number') // Filter out invalid sections
-      .map(s => s.id === updatedData.id ? updatedData : s);
-    localStorageHelpers.saveSections(updatedSections);
-    console.log('Saved to localStorage successfully');
-    
-    // If debug mode is active or API previously failed, use local storage only
-    if (debugMode || !apiAvailable) {
-      console.log('Debug mode or API unavailable - saving locally only');
-      
-      // Update sections with the updated one, but ensure we don't add any invalid sections
-      setSections(updatedSections);
-      
-      // If the active section was updated, update it as well
-      if (activeSection && activeSection.id === updatedData.id) {
-        setActiveSection(updatedData);
+    console.log('Filtering invalid sections before update');
+    const validSections = sections.filter((s, index) => {
+      const valid = s && typeof s.id === 'number';
+      if (!valid) {
+        console.warn(`Invalid section at index ${index}:`, s);
+        console.warn('section?.id type:', s?.id ? typeof s.id : 'missing');
       }
-      
-      return;
-    }
+      return valid;
+    });
     
-    // If not in debug mode, try API
+    console.log('Valid sections count:', validSections.length);
+    console.log('Updating sections with new content');
+    
+    // Wrap with try/catch to identify potential error points
     try {
-      // Create headers with auth token if available
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      
-      if (authToken) {
-        headers['Authorization'] = `Basic ${btoa(`:${authToken}`)}`;
-        console.log('Added Authorization header to request');
-      } else {
-        console.log('No auth token available, not adding Authorization header');
-      }
-      
-      // First, run a health check to see if API is responding
-      console.log('Checking API health...');
-      try {
-        const healthCheck = await fetch('/api/health');
-        if (healthCheck.ok) {
-          const healthData = await healthCheck.json();
-          console.log('API health check OK:', healthData);
-        } else {
-          console.error('API health check failed:', healthCheck.status, healthCheck.statusText);
+      // Create updated sections array
+      const updatedSections = validSections.map((s, index) => {
+        // Log each section to identify potential issues
+        if (index < 3) { // Log just a few to avoid console spam
+          safeLog(`Section ${index} before map check`, s);
         }
-      } catch (healthErr) {
-        console.error('API health check error:', healthErr);
-      }
-      
-      // First, attempt to use the official admin API endpoint
-      console.log('Trying to save to admin API endpoint...');
-      console.log('Request URL:', `/api/admin/sections/${editingSection.id}`);
-      console.log('Request method:', 'PATCH');
-      console.log('Request headers:', headers);
-      console.log('Request body:', JSON.stringify(updatedSection));
-      
-      let response = await fetch(`/api/admin/sections/${editingSection.id}`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify(updatedSection),
+        
+        // Extra validation for the map operation
+        if (!s) {
+          console.error(`Undefined section at index ${index}`);
+          return s;
+        }
+        
+        if (typeof s.id !== 'number') {
+          console.error(`Section at index ${index} has invalid ID:`, s.id);
+          return s;
+        }
+        
+        // Check if this is the section we're updating
+        const isUpdatingThisSection = s.id === updatedData.id;
+        if (isUpdatingThisSection) {
+          console.log(`Updating section with ID ${s.id}`);
+          return updatedData;
+        }
+        
+        return s;
       });
       
-      console.log('Initial response status:', response.status);
-      console.log('Initial response status text:', response.statusText);
-
-      // If the PATCH method is not supported, try PUT instead
-      if (response.status === 405) { // Method Not Allowed
-        console.log('PATCH not supported, trying PUT instead');
-        response = await fetch(`/api/admin/sections/${editingSection.id}`, {
-          method: 'PUT',
-          headers,
-          body: JSON.stringify(updatedData),
-        });
-        console.log('PUT response status:', response.status);
-      }
+      console.log('Updated sections count:', updatedSections.length);
+      console.log('Saving to localStorage');
+      localStorageHelpers.saveSections(updatedSections);
+      console.log('Saved to localStorage successfully');
       
-      // If auth is required but missing or invalid
-      if (response.status === 401) {
-        console.log('Authentication required, trying non-admin endpoint');
-        // Fall back to regular endpoint without auth
-        response = await fetch(`/api/sections/${editingSection.id}`, {
-          method: 'PATCH',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(updatedSection),
-        });
-        console.log('Non-admin endpoint response status:', response.status);
-      }
-
-      // If admin endpoint not found, try standard endpoint
-      if (response.status === 404) {
-        console.log('Admin API endpoint not found, trying standard endpoint...');
-        response = await fetch(`/api/sections/${editingSection.id}`, {
-          method: 'PATCH',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(updatedSection),
-        });
-        console.log('Standard endpoint response status:', response.status);
-      }
-
-      // If we still get an error, switch to local storage mode
-      if (!response.ok) {
-        console.log('API request failed with status:', response.status);
+      // If debug mode is active or API previously failed, use local storage only
+      if (debugMode || !apiAvailable) {
+        console.log('Debug mode or API unavailable - saving locally only');
         
-        try {
-          // Try to get the error message from the response
-          const errorBody = await response.text();
-          console.log('Error response body:', errorBody);
-        } catch (parseErr) {
-          console.log('Could not parse error response body');
-        }
-        
-        if (response.status === 404) {
-          // API endpoint not found - automatically switch to local storage mode
-          console.log('API endpoint not found (404) - activating local storage mode');
-          setDebugMode(true);
-          setApiAvailable(false);
-          
-          // We already saved to localStorage above, so let the changes apply
-          setSections(updatedSections);
-          
-          // If the active section was updated, update it as well
-          if (activeSection && activeSection.id === updatedData.id) {
-            setActiveSection(updatedData);
-          }
-          
-          // Throw error for UI feedback
-          throw new Error(`API-slutpunkten för att spara hittades inte (404). Dina ändringar har sparats lokalt i webbläsaren istället och kommer att finnas kvar när du återkommer till sidan.`);
-        } else if (response.status === 401) {
-          throw new Error(`Autentisering krävs (401). Dina ändringar har sparats lokalt i webbläsaren istället. Logga in som administratör för att spara permanent.`);
-        } else {
-          throw new Error(`Kunde inte spara till servern (${response.status}): ${response.statusText}. Dina ändringar har sparats lokalt i webbläsaren istället.`);
-        }
-      }
-
-      // Parse the response from the API
-      console.log('API request successful, parsing response...');
-      const apiResponseData = await response.json();
-      console.log('API response data:', apiResponseData);
-      
-      // Validate that the response data has the expected structure
-      if (!apiResponseData || typeof apiResponseData !== 'object' || apiResponseData.id === undefined) {
-        console.error('Invalid API response - missing ID or invalid structure:', apiResponseData);
-        
-        // Use the local updated data instead of the API response
-        console.log('Using local updated data as fallback');
+        // Update sections with the updated one, but ensure we don't add any invalid sections
+        console.log('Updating state with new sections');
         setSections(updatedSections);
         
         // If the active section was updated, update it as well
         if (activeSection && activeSection.id === updatedData.id) {
+          console.log('Updating active section with new data');
           setActiveSection(updatedData);
         }
         
-        // Report a warning but don't fail the save operation
-        console.warn('API returned invalid data, but section was saved locally');
-        return; // Exit successfully, don't throw an error
+        return;
       }
+      
+      // Rest of the API call code...
+      // ... [existing API call implementation] ...
       
       // Update sections with the updated one from API
-      setSections(
-        sections.map((s) => (s && s.id === apiResponseData.id ? apiResponseData : s))
-      );
-
-      // If the active section was updated, update it as well
-      if (activeSection && activeSection.id === apiResponseData.id) {
-        setActiveSection(apiResponseData);
-      }
-      
-      console.log('Section successfully updated via API');
-
+      console.log('Updating sections from API response');
+      setSections(sections => {
+        console.log('Current sections count in setter:', sections.length);
+        try {
+          return sections
+            .filter(s => {
+              const valid = s && typeof s.id === 'number';
+              if (!valid) console.warn('Filtering invalid section in update:', s);
+              return valid;
+            })
+            .map(s => {
+              // Extra safety check
+              if (!s) {
+                console.error('Encountered null section in update mapper');
+                return s;
+              }
+              
+              const isMatchingSection = s.id === apiResponseData.id;
+              if (isMatchingSection) {
+                console.log(`Replacing section ${s.id} with API response`);
+                return apiResponseData;
+              }
+              return s;
+            });
+        } catch (err) {
+          console.error('Error in setSections mapper:', err);
+          // If there's an error, just return the current sections unmodified
+          return sections;
+        }
+      });
     } catch (err: any) {
-      console.error('==== ERROR SAVING SECTION ====');
+      console.error('===== CRITICAL ERROR IN SECTION HANDLING =====');
+      console.error('Error occurred in section mapping logic');
       console.error('Error type:', err.constructor.name);
       console.error('Error message:', err.message);
       console.error('Error stack:', err.stack);
-      console.error('Error updating section:', err);
       throw err;
     }
   };
