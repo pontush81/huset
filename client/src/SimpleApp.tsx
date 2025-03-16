@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import MDEditor from '@uiw/react-md-editor';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 // Define types without using the shared schema
 interface Section {
@@ -10,9 +13,6 @@ interface Section {
   icon: string;
   updatedAt: string;
 }
-
-// Create a new QueryClient
-const queryClient = new QueryClient();
 
 // Simple Sidebar component
 const Sidebar = ({ sections, activeSectionSlug, setActiveSectionSlug, isMobileMenuOpen, setIsMobileMenuOpen }: { 
@@ -197,14 +197,14 @@ const EditSection = ({
           <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
             Content
           </label>
-          <textarea
-            id="content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={10}
-            className="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
-            disabled={status.loading}
-          />
+          <div data-color-mode="light">
+            <MDEditor
+              value={content}
+              onChange={(value) => setContent(value || '')}
+              preview="edit"
+              height={400}
+            />
+          </div>
         </div>
         
         <div className="flex justify-end space-x-2">
@@ -292,7 +292,7 @@ const UploadDocument = ({ sectionId }: { sectionId: number }) => {
   );
 };
 
-// Simple Content component with enhanced reliability
+// Update the Content component to use enhanced Markdown support
 const Content = ({ 
   section, 
   onEditSection 
@@ -338,10 +338,37 @@ const Content = ({
           <i className="fas fa-edit mr-2"></i> Edit
         </button>
       </div>
-      <div 
-        className="prose max-w-none" 
-        dangerouslySetInnerHTML={{ __html: content }}
-      />
+      <div className="prose prose-blue max-w-none">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          components={{
+            // Add custom components for better rendering
+            table: ({node, ...props}) => (
+              <table className="border-collapse border border-gray-300 my-4" {...props} />
+            ),
+            th: ({node, ...props}) => (
+              <th className="border border-gray-300 px-4 py-2 bg-gray-100" {...props} />
+            ),
+            td: ({node, ...props}) => (
+              <td className="border border-gray-300 px-4 py-2" {...props} />
+            ),
+            a: ({node, ...props}) => (
+              <a className="text-blue-600 hover:text-blue-800 underline" {...props} />
+            ),
+            img: ({node, ...props}) => (
+              <img className="max-w-full h-auto my-4 rounded-lg shadow-lg" {...props} />
+            ),
+            code: ({node, inline, ...props}) => (
+              inline 
+                ? <code className="bg-gray-100 rounded px-1 py-0.5" {...props} />
+                : <code className="block bg-gray-100 rounded p-4 overflow-x-auto" {...props} />
+            )
+          }}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
     </div>
   );
 };
@@ -589,15 +616,26 @@ const App = () => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
         
-        const response = await fetch('http://localhost:5001/api/sections', {
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          throw new Error(`API error (${response.status})`);
+        // Check API availability
+        const healthResponse = await fetch('/api/health');
+        if (!healthResponse.ok) {
+          setApiState({
+            isAvailable: false,
+            isOffline: true,
+            lastUpdated: new Date(),
+            version: '1.0.0'
+          });
+          throw new Error('API request failed');
         }
-        
+
+        setApiState({
+          isAvailable: true,
+          isOffline: false,
+          lastUpdated: new Date(),
+          version: '1.0.0'
+        });
+
+        const response = await fetch('/api/sections');
         const apiSections = await response.json();
         
         if (!Array.isArray(apiSections)) {
@@ -617,7 +655,8 @@ const App = () => {
         setApiState({
           isAvailable: true,
           isOffline: false,
-          lastUpdated: new Date()
+          lastUpdated: new Date(),
+          version: '1.0.0'
         });
         
       } catch (err) {
@@ -635,7 +674,8 @@ const App = () => {
           setApiState({
             isAvailable: false,
             isOffline: true,
-            lastUpdated: new Date()
+            lastUpdated: new Date(),
+            version: '1.0.0'
           });
         } else {
           setError('Failed to load sections. Using local data if available.');
@@ -774,48 +814,29 @@ const App = () => {
           headers['Authorization'] = `Bearer ${authToken}`;
         }
         
-        // Try different endpoints with different methods
-        const endpoints = [
-          { url: '/api/sections', method: 'PUT' },
-          { url: '/api/admin/sections', method: 'PUT' },
-          { url: `/api/sections/${updatedSection.id}`, method: 'PUT' },
-          { url: `/api/admin/sections/${updatedSection.id}`, method: 'PUT' },
-          { url: `/api/admin/sections/${updatedSection.id}`, method: 'PATCH' }
-        ];
+        // Send only the necessary data to the API
+        const apiData = {
+          content: updateData.content
+        };
         
-        let apiSuccess = false;
+        console.log('Sending update to API:', apiData);
         
-        for (const endpoint of endpoints) {
-          try {
-            console.log(`Trying ${endpoint.method} ${endpoint.url}`);
-            
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
-            
-            const response = await fetch(endpoint.url, {
-              method: endpoint.method,
-              headers,
-              body: JSON.stringify({ section: updatedSection }),
-              signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (response.ok) {
-              console.log(`Success with ${endpoint.method} ${endpoint.url}`);
-              apiSuccess = true;
-              break;
-            }
-          } catch (endpointErr) {
-            console.log(`Failed with ${endpoint.method} ${endpoint.url}`);
-          }
+        const response = await fetch(`/api/sections/${updateData.id}`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify(apiData)
+        });
+        
+        if (!response.ok) {
+          throw new Error('API update failed');
         }
         
-        if (!apiSuccess) {
-          // API update failed but we already saved locally
-          setApiState(prev => ({ ...prev, isOffline: true }));
-          throw new Error('Changes saved locally, but could not save to server.');
-        }
+        setApiState({
+          isAvailable: true,
+          isOffline: false,
+          lastUpdated: new Date(),
+          version: '1.0.0'
+        });
         
       } catch (apiErr) {
         // API failed, but we still saved locally
@@ -939,13 +960,4 @@ const App = () => {
   );
 };
 
-// Wrapped app with React Query provider
-const WrappedApp = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  );
-};
-
-export default WrappedApp; 
+export default App; 

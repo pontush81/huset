@@ -1,0 +1,45 @@
+import React, { useEffect, useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Define types without using the shared schema
+interface Section {
+  id: number;
+  title: string;
+  slug: string;
+  content: string;
+  icon: string;
+  updatedAt: string;
+}
+
+// Create a new QueryClient
+const queryClient = new QueryClient();
+
+// ... existing code ...
+          try {
+            const response = await fetch('/api/health');
+            if (!response.ok) {
+              setApiState({
+                isAvailable: false,
+                isOffline: true,
+                lastUpdated: new Date(),
+                version: '1.0.0'
+              });
+              throw new Error('API request failed');
+            }
+
+            setApiState({
+              isAvailable: true,
+              isOffline: false,
+              lastUpdated: new Date(),
+              version: '1.0.0'
+            });
+          } catch (err) {
+            console.error('Error checking API availability:', err);
+            setApiState({
+              isAvailable: false,
+              isOffline: true,
+              lastUpdated: new Date(),
+              version: '1.0.0'
+            });
+          }
+// ... existing code ... 
