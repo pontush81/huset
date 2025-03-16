@@ -293,6 +293,82 @@ module.exports = async (req, res) => {
         }
       }
       
+      // Handle trailing slash for admin sections route - special case for PUT/PATCH with trailing slash
+      if ((path === '/admin/sections/' || path.match(/^\/admin\/sections\/\?/)) && (req.method === 'PATCH' || req.method === 'PUT')) {
+        console.log('Handling admin sections update with trailing slash');
+        
+        try {
+          // Parse the request body
+          const updates = await parseBody(req);
+          
+          // Extract the section ID from the body since it's not in the URL
+          if (!updates.id || typeof updates.id !== 'number') {
+            console.error('Missing section ID in request body:', updates);
+            return res.status(400).end(safeStringify({ 
+              error: 'Invalid request body', 
+              message: 'Section ID is required in the request body when using this endpoint' 
+            }));
+          }
+          
+          const sectionId = updates.id;
+          const sectionIndex = sections.findIndex(s => s && s.id === sectionId);
+          
+          if (sectionIndex === -1) {
+            console.log(`Section not found (admin): ${sectionId}`);
+            return res.status(404).end(safeStringify({ error: 'Section not found' }));
+          }
+          
+          const section = sections[sectionIndex];
+          
+          console.log(`Received updates for section (admin) ${section.id}:`, updates);
+          
+          // Update only allowed fields
+          const allowedFields = ['title', 'content', 'icon', 'slug'];
+          const updatedSection = { ...section };
+          
+          for (const field of allowedFields) {
+            if (updates[field] !== undefined) {
+              updatedSection[field] = updates[field];
+            }
+          }
+          
+          // Update updatedAt timestamp
+          updatedSection.updatedAt = new Date().toISOString();
+          
+          // Extra validation to prevent undefined values in response
+          const validatedSection = {
+            id: updatedSection.id,
+            title: updatedSection.title || section.title,
+            slug: updatedSection.slug || section.slug,
+            content: updatedSection.content !== undefined ? updatedSection.content : section.content,
+            icon: updatedSection.icon || section.icon,
+            updatedAt: updatedSection.updatedAt
+          };
+          
+          // Additional validation to ensure we always have a valid ID
+          if (!validatedSection.id || typeof validatedSection.id !== 'number') {
+            console.error('Invalid ID in validatedSection after validation:', validatedSection);
+            validatedSection.id = section.id; // Ensure we use the original ID if the updated one is invalid
+          }
+          
+          // Extra logging for debugging
+          console.log('Final validated section data being saved:', validatedSection);
+          
+          // Update sections array
+          sections[sectionIndex] = validatedSection;
+          
+          console.log(`Updated section (admin) ${validatedSection.id}: ${validatedSection.title}`);
+          return res.end(safeStringify(validatedSection));
+        } catch (error) {
+          console.error('Error updating section (admin):', error);
+          return res.status(400).end(safeStringify({ 
+            error: 'Invalid request body',
+            message: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+          }));
+        }
+      }
+      
       // Handle specific section by ID in admin route
       if (path.startsWith('/admin/sections/')) {
         const idOrSlug = path.split('/')[3];

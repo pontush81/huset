@@ -700,10 +700,18 @@ const App = () => {
     let apiResponseData = null;
     
     try {
-      response = await fetch(`/api/admin/sections/${editingSection.id}`, {
+      // Create a complete request body that includes the section ID
+      const completeRequestBody = {
+        ...updatedSection,
+        id: editingSection.id // Explicitly include the ID in the request body
+      };
+      
+      // Use the base endpoint without a specific ID in the URL
+      console.log('Using base admin sections endpoint with ID in request body');
+      response = await fetch('/api/admin/sections/', {
         method: 'PATCH',
         headers,
-        body: JSON.stringify(updatedSection),
+        body: JSON.stringify(completeRequestBody),
       });
       
       console.log('Initial response status:', response.status);
@@ -712,10 +720,13 @@ const App = () => {
       // If the PATCH method is not supported, try PUT instead
       if (response.status === 405) { // Method Not Allowed
         console.log('PATCH not supported, trying PUT instead');
-        response = await fetch(`/api/admin/sections/${editingSection.id}`, {
+        response = await fetch('/api/admin/sections/', {
           method: 'PUT',
           headers,
-          body: JSON.stringify(updatedData),
+          body: JSON.stringify({
+            ...updatedData,
+            id: editingSection.id // Ensure ID is included
+          }),
         });
         console.log('PUT response status:', response.status);
       }
