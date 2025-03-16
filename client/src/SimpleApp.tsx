@@ -390,25 +390,12 @@ const localStorageHelpers = {
     
     // Ensure we're working with valid sections only
     console.log('Filtering invalid API sections');
-    const validApiSections = apiSections.filter((section, index) => {
-      if (!section) {
-        console.warn(`Filtering out null/undefined API section at index ${index}`);
-        return false;
-      }
-      
-      // Ensure we have a valid ID (must be a number)
-      const valid = typeof section.id === 'number';
-      if (!valid) {
-        console.warn(`Filtering out invalid API section at index ${index}:`, section);
-        console.warn('section.id type:', section.id ? typeof section.id : 'missing');
-      }
-      return valid;
-    });
+    const validApiSections = apiSections.filter(isValidSection);
     
     console.log('Valid API sections count:', validApiSections.length);
     
     // Safety check - get local sections, with fallback to empty array
-    let localSections = [];
+    let localSections: Section[] = [];
     try {
       localSections = localStorageHelpers.getSavedSections();
       console.log('Raw local sections count:', localSections?.length || 'undefined');
@@ -416,7 +403,7 @@ const localStorageHelpers = {
       console.error('Error loading from localStorage:', err);
     }
     
-    // Safety check - ensure localSections is an array
+    // Safety check - ensure localSections is an array with valid sections
     if (!Array.isArray(localSections)) {
       console.error('Local sections is not an array:', localSections);
       localSections = []; // Reset to empty array if invalid
@@ -424,20 +411,7 @@ const localStorageHelpers = {
     
     // Filter local sections to ensure they have valid IDs
     console.log('Filtering invalid local sections');
-    const validLocalSections = localSections.filter((section, index) => {
-      if (!section) {
-        console.warn(`Filtering out null/undefined local section at index ${index}`);
-        return false;
-      }
-      
-      // Ensure we have a valid ID (must be a number)
-      const valid = typeof section.id === 'number';
-      if (!valid) {
-        console.warn(`Filtering out invalid local section at index ${index}:`, section);
-        console.warn('section.id type:', section.id ? typeof section.id : 'missing');
-      }
-      return valid;
-    });
+    const validLocalSections = localSections.filter(isValidSection);
     
     console.log('Valid local sections count:', validLocalSections.length);
     
@@ -460,13 +434,13 @@ const localStorageHelpers = {
       // Use a safer approach - first convert to a map for faster lookups
       const localSectionsMap = new Map();
       validLocalSections.forEach(section => {
-        if (section && typeof section.id === 'number') {
+        if (isValidSection(section)) {
           localSectionsMap.set(section.id, section);
         }
       });
       
-      // Process each API section, merging with local if available
-      const mergedSections = validApiSections.map(apiSection => {
+      // Process each API section, merging with local if available - USING SAFE MAP UTILITY
+      const mergedSections = safeMapSections(validApiSections, apiSection => {
         // This is safe because we already filtered out invalid sections
         const sectionId = apiSection.id;
         const localSection = localSectionsMap.get(sectionId);
@@ -509,12 +483,46 @@ const safeLog = (label: string, data: any) => {
 
 // Utility function to check if a section is valid
 const isValidSection = (section: any): boolean => {
-  const valid = section && typeof section === 'object' && typeof section.id === 'number';
-  if (!valid && section) {
-    console.warn('Invalid section detected:', section);
-    console.warn('section.id type:', section?.id ? typeof section.id : 'missing');
+  if (!section) return false;
+  if (typeof section !== 'object') return false;
+  if (typeof section.id !== 'number') return false;
+  return true;
+};
+
+// Ultra-safe array mapping utility - never fails even with bad data
+const safeMapSections = (sections: any[], mapFn: (section: Section) => any, filterEmpty: boolean = true): any[] => {
+  // Handle bad input
+  if (!Array.isArray(sections)) {
+    console.warn('safeMapSections received non-array input:', sections);
+    return [];
   }
-  return valid;
+  
+  try {
+    // First filter out any invalid items
+    const validSections = sections.filter(section => {
+      const valid = isValidSection(section);
+      if (!valid && section !== null && section !== undefined) {
+        console.warn('Filtering out invalid section in safeMapSections:', section);
+      }
+      return valid;
+    });
+    
+    // Then safely map over the valid items only
+    const result = validSections.map(section => {
+      try {
+        return mapFn(section as Section);
+      } catch (err) {
+        console.error('Error in map function for section:', section, err);
+        return null; // Return null for any mapping errors
+      }
+    });
+    
+    // Optionally filter out null/undefined results
+    return filterEmpty ? result.filter(Boolean) : result;
+  } catch (err) {
+    console.error('Critical error in safeMapSections:', err);
+    return []; // Return empty array as ultimate fallback
+  }
 };
 
 // Main App component
@@ -735,13 +743,16 @@ const App = () => {
       console.log('Current sections count:', currentSections.length);
       
       // Step 2: Create a new array with only valid sections
-      const validSections = currentSections.filter(isValidSection);
+      const validSections = Array.isArray(currentSections) 
+        ? currentSections.filter(isValidSection)
+        : [];
+        
       if (validSections.length !== currentSections.length) {
         console.warn(`Filtered out ${currentSections.length - validSections.length} invalid sections`);
       }
       
-      // Step 3: Create new array with updated section
-      const updatedSections = validSections.map(section => 
+      // Step 3: Create new array with updated section - USING SAFE MAP UTILITY
+      const updatedSections = safeMapSections(validSections, section => 
         section.id === updatedSection.id ? updatedSection : section
       );
       
@@ -855,23 +866,56 @@ const App = () => {
   
   // Refactored EditSection to work with the new approach
   const EditSectionWrapper = () => {
+    // Triple-check that we have a valid editing section
     if (!editingSection) {
+      console.warn('EditSectionWrapper called with no editing section');
       return null;
     }
     
+    if (!isValidSection(editingSection)) {
+      console.error('EditSectionWrapper received invalid section:', editingSection);
+      // Reset the editing state to prevent continuous errors
+      setEditingSection(null);
+      return (
+        <div className="flex-1 p-4 md:p-8 overflow-auto bg-red-50 text-red-700 border-l-4 border-red-500">
+          <h2 className="text-xl font-bold">Error</h2>
+          <p>Ett fel uppstod vid redigering. Sektionen kunde inte laddas korrekt.</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Ladda om sidan
+          </button>
+        </div>
+      );
+    }
+    
+    // Create a deep copy to avoid reference issues
+    const sectionCopy = { ...editingSection };
+    
     // Create a modified onSave handler that works with our refactored flow
     const handleSave = async (updateData: Partial<Section>) => {
+      // Additional validation here
+      if (!updateData) {
+        throw new Error('No update data provided');
+      }
+      
       if (typeof updateData.content !== 'string') {
         throw new Error('Updated content is missing or invalid');
       }
       
-      return handleSaveSection(updateData.content);
+      try {
+        return await handleSaveSection(updateData.content);
+      } catch (error) {
+        console.error('Error in EditSectionWrapper handleSave:', error);
+        throw error;
+      }
     };
     
     return (
       <div className="flex-1 p-4 md:p-8 overflow-auto">
         <EditSection 
-          section={editingSection}
+          section={sectionCopy}
           onSave={handleSave}
           onCancel={handleCancelEdit}
           debugMode={debugMode}
