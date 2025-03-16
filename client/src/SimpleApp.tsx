@@ -25,6 +25,8 @@ const Sidebar = ({ sections, activeSectionSlug, setActiveSectionSlug, isMobileMe
   // Filter out any potentially invalid sections
   const validSections = sections.filter(section => section && typeof section.id === 'number');
   
+  console.log('===== SIDEBAR DEBUG - SECTIONS COUNT ====', validSections.length);
+  
   const handleSectionClick = (slug: string) => {
     setActiveSectionSlug(slug);
     // Close mobile menu when selection is made on small screens
