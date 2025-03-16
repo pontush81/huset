@@ -686,7 +686,7 @@ const App = () => {
   };
 
   // Save sections to localStorage
-  const saveToLocalStorage = (updatedSections: Section[]) => {
+  const saveToLocalStorage = (updatedSections: Section[]): boolean => {
     try {
       localStorage.setItem('brf_handbook_sections', JSON.stringify(updatedSections));
       return true;
@@ -721,7 +721,7 @@ const App = () => {
   // COMPLETELY REBUILT: Handle section save with simpler, more reliable approach
   const handleSaveSection = async (updateData: { id: number, content: string }) => {
     try {
-      console.log(`Saving section ID ${updateData.id}`);
+      console.log(`=== DEBUG: Starting save operation for section ID ${updateData.id} ===`);
       
       if (!updateData.id) {
         throw new Error('Cannot save: Missing section ID');
@@ -742,6 +742,7 @@ const App = () => {
       };
       
       // 1. First update the local state immediately for a responsive UX
+      console.log('DEBUG: Updating local state');
       const updatedSections = sections.map(s => 
         s.id === updatedSection.id ? updatedSection : s
       );
@@ -749,6 +750,7 @@ const App = () => {
       setSections(updatedSections);
       
       // 2. Always save to localStorage as a backup
+      console.log('DEBUG: Saving to localStorage');
       const savedLocally = saveToLocalStorage(updatedSections);
       
       // If API is known to be offline, don't attempt API call
@@ -830,7 +832,7 @@ const App = () => {
       setEditingSection(null);
       
     } catch (err) {
-      console.error('Error in handleSaveSection:', err);
+      console.error('ERROR in handleSaveSection:', err);
       throw err; // Let the UI handle the error
     }
   };
