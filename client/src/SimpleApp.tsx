@@ -589,7 +589,7 @@ const App = () => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
         
-        const response = await fetch('/api/sections', {
+        const response = await fetch('http://localhost:5001/api/sections', {
           signal: controller.signal
         });
         clearTimeout(timeoutId);

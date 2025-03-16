@@ -1,21 +1,26 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import cors from 'cors';
 
 // Create Express app
 const app = express();
 
-// Add CORS headers to allow browser access
+// Add CORS headers for all requests
+app.use(cors({
+  origin: '*', // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// If cors package isn't installed, use these custom headers
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  
-  // Handle preflight requests
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    return res.sendStatus(200);
   }
-  
   next();
 });
 
@@ -158,7 +163,8 @@ const saveSectionsToFile = (sectionsData: any[]): void => {
 // Load sections from file at startup
 let sections = loadSectionsFromFile();
 
-// API Routes
+// Add API routes for both regular and admin paths
+// API Routes - regular endpoints
 app.get('/api/sections', (req, res) => {
   console.log('GET /api/sections called, returning:', sections.length, 'sections');
   res.json(sections);
@@ -175,8 +181,9 @@ app.get('/api/sections/:slug', (req, res) => {
   res.json(section);
 });
 
-// Add new PUT endpoint to update a section by ID
+// PUT endpoint to update a section by ID
 app.put('/api/sections/:id', (req, res) => {
+  console.log('PUT /api/sections/:id called with ID:', req.params.id);
   const { id } = req.params;
   const updateData = req.body;
   
@@ -199,8 +206,9 @@ app.put('/api/sections/:id', (req, res) => {
   res.json(sections[index]);
 });
 
-// Add new PATCH endpoint as an alternative
+// PATCH endpoint
 app.patch('/api/sections/:id', (req, res) => {
+  console.log('PATCH /api/sections/:id called with ID:', req.params.id);
   const { id } = req.params;
   const updateData = req.body;
   
@@ -210,7 +218,7 @@ app.patch('/api/sections/:id', (req, res) => {
     return res.status(404).json({ error: "Section not found" });
   }
   
-  // Update section (PATCH only updates provided fields)
+  // Update section
   sections[index] = { 
     ...sections[index], 
     ...updateData,
@@ -223,7 +231,7 @@ app.patch('/api/sections/:id', (req, res) => {
   res.json(sections[index]);
 });
 
-// Add new POST endpoint to create a section
+// POST endpoint to create a section
 app.post('/api/sections', (req, res) => {
   const newSection = req.body;
   
@@ -241,7 +249,7 @@ app.post('/api/sections', (req, res) => {
   res.status(201).json(newSection);
 });
 
-// Add DELETE endpoint
+// DELETE endpoint
 app.delete('/api/sections/:id', (req, res) => {
   const { id } = req.params;
   const index = sections.findIndex(s => s.id === parseInt(id));
@@ -259,9 +267,83 @@ app.delete('/api/sections/:id', (req, res) => {
   res.json({ message: "Section deleted", section: removed });
 });
 
+// API Routes - admin endpoints (duplicated to match client requests)
+app.get('/api/admin/sections', (req, res) => {
+  res.json(sections);
+});
+
+app.put('/api/admin/sections', (req, res) => {
+  const updateData = req.body;
+  if (!updateData || !updateData.id) {
+    return res.status(400).json({ error: "Invalid data, missing id" });
+  }
+  
+  const index = sections.findIndex(s => s.id === updateData.id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Section not found" });
+  }
+  
+  sections[index] = { 
+    ...sections[index], 
+    ...updateData,
+    updatedAt: new Date().toISOString() 
+  };
+  
+  saveSectionsToFile(sections);
+  res.json(sections[index]);
+});
+
+app.put('/api/admin/sections/:id', (req, res) => {
+  console.log('PUT /api/admin/sections/:id called with ID:', req.params.id);
+  const { id } = req.params;
+  const updateData = req.body;
+  
+  const index = sections.findIndex(s => s.id === parseInt(id));
+  
+  if (index === -1) {
+    return res.status(404).json({ error: "Section not found" });
+  }
+  
+  // Update section
+  sections[index] = { 
+    ...sections[index], 
+    ...updateData,
+    updatedAt: new Date().toISOString() 
+  };
+  
+  // Save changes to file
+  saveSectionsToFile(sections);
+  
+  res.json(sections[index]);
+});
+
+app.patch('/api/admin/sections/:id', (req, res) => {
+  console.log('PATCH /api/admin/sections/:id called with ID:', req.params.id);
+  const { id } = req.params;
+  const updateData = req.body;
+  
+  const index = sections.findIndex(s => s.id === parseInt(id));
+  
+  if (index === -1) {
+    return res.status(404).json({ error: "Section not found" });
+  }
+  
+  // Update section
+  sections[index] = { 
+    ...sections[index], 
+    ...updateData,
+    updatedAt: new Date().toISOString() 
+  };
+  
+  // Save changes to file
+  saveSectionsToFile(sections);
+  
+  res.json(sections[index]);
+});
+
 // Fallback API handler
 app.use('/api/*', (req, res) => {
-  console.log('API route not found:', req.path);
+  console.log('API route not found:', req.path, 'method:', req.method);
   res.status(404).json({ error: 'API route not found' });
 });
 
