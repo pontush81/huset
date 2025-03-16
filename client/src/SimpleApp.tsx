@@ -22,8 +22,11 @@ const Sidebar = ({ sections, activeSectionSlug, setActiveSectionSlug, isMobileMe
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (isOpen: boolean) => void;
 }) => {
+  // Ultra-defensive check - if sections is not an array, use empty array
+  const sectionsToUse = Array.isArray(sections) ? sections : [];
+  
   // Filter out any potentially invalid sections
-  const validSections = sections.filter(section => section && typeof section.id === 'number');
+  const validSections = sectionsToUse.filter(section => section && typeof section.id === 'number');
   
   console.log('===== SIDEBAR DEBUG - SECTIONS COUNT ====', validSections.length);
   
@@ -308,7 +311,8 @@ const Content = ({
   section: Section | null,
   onEditSection: (section: Section) => void
 }) => {
-  if (!section) {
+  // Ultra-defensive check - if no section or invalid section
+  if (!section || !isValidSection(section)) {
     return (
       <div className="flex-1 flex items-center justify-center p-4 md:p-8">
         <div className="text-center text-gray-500">
@@ -320,11 +324,14 @@ const Content = ({
     );
   }
 
+  // We've verified section is valid, safe to access properties
+  const { id, title, icon, content } = section;
+  
   return (
     <div className="flex-1 p-4 md:p-8 overflow-auto">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between">
         <h1 className="text-2xl font-bold mb-2 sm:mb-0">
-          <i className={`fas ${section.icon} mr-2`}></i> {section.title}
+          <i className={`fas ${icon} mr-2`}></i> {title}
         </h1>
         <button 
           onClick={() => onEditSection(section)}
@@ -335,7 +342,7 @@ const Content = ({
       </div>
       <div 
         className="prose max-w-none" 
-        dangerouslySetInnerHTML={{ __html: section.content }}
+        dangerouslySetInnerHTML={{ __html: content }}
       />
     </div>
   );
@@ -579,11 +586,20 @@ const App = () => {
       console.log('===== FETCHING SECTIONS =====');
       try {
         console.log('Making API request to /api/sections');
-        const response = await fetch('/api/sections');
+        
+        // Set a timeout for the fetch operation
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('API request timed out')), 5000)
+        );
+        
+        const fetchPromise = fetch('/api/sections');
+        
+        // Race between the fetch and the timeout
+        const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
         
         if (!response.ok) {
           console.error('API request failed with status:', response.status);
-          throw new Error('Failed to fetch sections');
+          throw new Error(`Failed to fetch sections (Status: ${response.status})`);
         }
         
         console.log('API response status:', response.status);
@@ -625,7 +641,17 @@ const App = () => {
         console.error('Error stack:', err instanceof Error ? err.stack : 'No stack trace');
         console.error('Error fetching sections:', err);
         
-        setError('Failed to load sections. Please try again later.');
+        // Check if it's a network error or timeout indicating API is unavailable
+        const isApiOffline = 
+          (err instanceof Error && 
+           (err.message.includes('timed out') || 
+            err.message.includes('Network Error') ||
+            err.message.includes('Failed to fetch')));
+            
+        setError(isApiOffline 
+          ? 'API server appears to be offline. Running in local storage mode.' 
+          : 'Failed to load sections. Please try again later.');
+          
         setLoading(false);
         setApiAvailable(false);
         
