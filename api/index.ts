@@ -111,8 +111,52 @@ const defaultSections = [
   }
 ];
 
-// In-memory section storage for Vercel (will reset on deployment)
-let sections = [...defaultSections];
+// File path for storing sections
+const SECTIONS_FILE_PATH = path.join(process.cwd(), 'data', 'sections.json');
+
+// Function to load sections from file
+const loadSectionsFromFile = (): any[] => {
+  try {
+    // Create data directory if it doesn't exist
+    if (!fs.existsSync(path.dirname(SECTIONS_FILE_PATH))) {
+      fs.mkdirSync(path.dirname(SECTIONS_FILE_PATH), { recursive: true });
+    }
+    
+    // Read from file if it exists
+    if (fs.existsSync(SECTIONS_FILE_PATH)) {
+      const data = fs.readFileSync(SECTIONS_FILE_PATH, 'utf8');
+      console.log(`Loaded ${JSON.parse(data).length} sections from file`);
+      return JSON.parse(data);
+    }
+    
+    // If file doesn't exist, use default data and save it
+    fs.writeFileSync(SECTIONS_FILE_PATH, JSON.stringify(defaultSections, null, 2));
+    console.log(`Initialized file with ${defaultSections.length} default sections`);
+    return [...defaultSections];
+  } catch (error) {
+    console.error('Error loading sections from file:', error);
+    return [...defaultSections];
+  }
+};
+
+// Function to save sections to file
+const saveSectionsToFile = (sectionsData: any[]): void => {
+  try {
+    // Create data directory if it doesn't exist
+    if (!fs.existsSync(path.dirname(SECTIONS_FILE_PATH))) {
+      fs.mkdirSync(path.dirname(SECTIONS_FILE_PATH), { recursive: true });
+    }
+    
+    // Save to file
+    fs.writeFileSync(SECTIONS_FILE_PATH, JSON.stringify(sectionsData, null, 2));
+    console.log(`Saved ${sectionsData.length} sections to file`);
+  } catch (error) {
+    console.error('Error saving sections to file:', error);
+  }
+};
+
+// Load sections from file at startup
+let sections = loadSectionsFromFile();
 
 // API Routes
 app.get('/api/sections', (req, res) => {
@@ -131,134 +175,89 @@ app.get('/api/sections/:slug', (req, res) => {
   res.json(section);
 });
 
-// ADD NEW ROUTES FOR UPDATING SECTIONS
-// PUT endpoint for updating a section
-app.put('/api/sections', (req, res) => {
-  try {
-    console.log('PUT /api/sections called with body:', req.body);
-    
-    const { section } = req.body;
-    
-    // Validate incoming data
-    if (!section || typeof section.id !== 'number') {
-      return res.status(400).json({ error: "Invalid section data" });
-    }
-    
-    // Find section by ID
-    const index = sections.findIndex(s => s.id === section.id);
-    
-    if (index === -1) {
-      return res.status(404).json({ error: "Section not found" });
-    }
-    
-    // Update the section
-    sections[index] = {
-      ...sections[index],
-      ...section,
-      updatedAt: new Date().toISOString()
-    };
-    
-    console.log(`Section ${section.id} updated successfully`);
-    res.json(sections[index]);
-  } catch (err) {
-    console.error('Error updating section:', err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// PATCH/PUT endpoint for updating a specific section by ID 
+// Add new PUT endpoint to update a section by ID
 app.put('/api/sections/:id', (req, res) => {
-  updateSectionById(req, res);
+  const { id } = req.params;
+  const updateData = req.body;
+  
+  const index = sections.findIndex(s => s.id === parseInt(id));
+  
+  if (index === -1) {
+    return res.status(404).json({ error: "Section not found" });
+  }
+  
+  // Update section
+  sections[index] = { 
+    ...sections[index], 
+    ...updateData,
+    updatedAt: new Date().toISOString() 
+  };
+  
+  // Save changes to file
+  saveSectionsToFile(sections);
+  
+  res.json(sections[index]);
 });
 
+// Add new PATCH endpoint as an alternative
 app.patch('/api/sections/:id', (req, res) => {
-  updateSectionById(req, res);
-});
-
-// PUT endpoint for admin updating a section
-app.put('/api/admin/sections', (req, res) => {
-  // Just reuse the same logic by calling the normal endpoint handler
-  try {
-    console.log('Admin PUT /api/admin/sections called, forwarding to regular handler');
-    // Use the same handler as the regular endpoint
-    const { section } = req.body;
-    
-    // Validate incoming data
-    if (!section || typeof section.id !== 'number') {
-      return res.status(400).json({ error: "Invalid section data" });
-    }
-    
-    // Find section by ID
-    const index = sections.findIndex(s => s.id === section.id);
-    
-    if (index === -1) {
-      return res.status(404).json({ error: "Section not found" });
-    }
-    
-    // Update the section
-    sections[index] = {
-      ...sections[index],
-      ...section,
-      updatedAt: new Date().toISOString()
-    };
-    
-    console.log(`Section ${section.id} updated successfully via admin endpoint`);
-    res.json(sections[index]);
-  } catch (err) {
-    console.error('Error in admin update:', err);
-    res.status(500).json({ error: "Server error" });
+  const { id } = req.params;
+  const updateData = req.body;
+  
+  const index = sections.findIndex(s => s.id === parseInt(id));
+  
+  if (index === -1) {
+    return res.status(404).json({ error: "Section not found" });
   }
+  
+  // Update section (PATCH only updates provided fields)
+  sections[index] = { 
+    ...sections[index], 
+    ...updateData,
+    updatedAt: new Date().toISOString() 
+  };
+  
+  // Save changes to file
+  saveSectionsToFile(sections);
+  
+  res.json(sections[index]);
 });
 
-// PUT/PATCH endpoint for admin updating a specific section by ID
-app.put('/api/admin/sections/:id', (req, res) => {
-  updateSectionById(req, res);
+// Add new POST endpoint to create a section
+app.post('/api/sections', (req, res) => {
+  const newSection = req.body;
+  
+  // Ensure the new section has an ID
+  const maxId = Math.max(...sections.map(s => s.id), 0);
+  newSection.id = maxId + 1;
+  newSection.updatedAt = new Date().toISOString();
+  
+  // Add the new section
+  sections.push(newSection);
+  
+  // Save changes to file
+  saveSectionsToFile(sections);
+  
+  res.status(201).json(newSection);
 });
 
-app.patch('/api/admin/sections/:id', (req, res) => {
-  updateSectionById(req, res);
-});
-
-// Helper function for updating a section by ID
-function updateSectionById(req: express.Request, res: express.Response) {
-  try {
-    const { id } = req.params;
-    const sectionId = parseInt(id, 10);
-    
-    if (isNaN(sectionId)) {
-      return res.status(400).json({ error: "Invalid section ID" });
-    }
-    
-    const { section } = req.body;
-    let updateData = section;
-    
-    // If the request body doesn't have a nested section object, use the body itself
-    if (!updateData) {
-      updateData = req.body;
-    }
-    
-    // Find section by ID
-    const index = sections.findIndex(s => s.id === sectionId);
-    
-    if (index === -1) {
-      return res.status(404).json({ error: `Section with ID ${sectionId} not found` });
-    }
-    
-    // Update the section
-    sections[index] = {
-      ...sections[index],
-      ...updateData,
-      id: sectionId, // Ensure ID doesn't change
-      updatedAt: new Date().toISOString()
-    };
-    
-    console.log(`Section ${sectionId} updated successfully`);
-    res.json(sections[index]);
-  } catch (err) {
-    console.error('Error updating section by ID:', err);
-    res.status(500).json({ error: "Server error" });
+// Add DELETE endpoint
+app.delete('/api/sections/:id', (req, res) => {
+  const { id } = req.params;
+  const index = sections.findIndex(s => s.id === parseInt(id));
+  
+  if (index === -1) {
+    return res.status(404).json({ error: "Section not found" });
   }
-}
+  
+  // Remove the section
+  const removed = sections.splice(index, 1)[0];
+  
+  // Save changes to file
+  saveSectionsToFile(sections);
+  
+  res.json({ message: "Section deleted", section: removed });
+});
 
 // Fallback API handler
 app.use('/api/*', (req, res) => {
