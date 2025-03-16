@@ -15,6 +15,8 @@ const __dirname = path.dirname(__filename);
 
 // Path for bookings file
 const BOOKINGS_FILE = path.join(__dirname, '../data/bookings.json');
+// Path for sections file
+const SECTIONS_FILE = path.join(__dirname, '../data/sections.json');
 
 // Ensure data directory exists
 if (!fs.existsSync(path.join(__dirname, '../data'))) {
@@ -81,11 +83,57 @@ export class MemStorage implements IStorage {
     this.bookingCurrentId = 1;
     this.sectionCurrentId = 1;
     
-    // Initialize with default handbook sections
-    this.initializeDefaultSections();
+    // Load sections from file if it exists
+    this.loadSectionsFromFile();
+    
+    // If no sections were loaded, initialize with defaults
+    if (this.sections.size === 0) {
+      this.initializeDefaultSections();
+    }
     
     // Load bookings from file if it exists
     this.loadBookingsFromFile();
+  }
+  
+  // Load sections from file
+  private loadSectionsFromFile(): void {
+    try {
+      if (fs.existsSync(SECTIONS_FILE)) {
+        const sectionsData = fs.readFileSync(SECTIONS_FILE, 'utf8');
+        const sectionsArray: Section[] = JSON.parse(sectionsData);
+        
+        // Find highest section ID to ensure new IDs don't clash
+        let maxId = 0;
+        
+        sectionsArray.forEach(section => {
+          this.sections.set(section.id, section);
+          maxId = Math.max(maxId, section.id);
+        });
+        
+        // Update the section ID counter
+        if (maxId > 0) {
+          this.sectionCurrentId = maxId + 1;
+        }
+        
+        console.log(`Loaded ${sectionsArray.length} sections from file.`);
+      } else {
+        console.log('No sections file found, will initialize with defaults.');
+      }
+    } catch (error) {
+      console.error('Error loading sections from file:', error);
+      console.log('Will initialize with default sections.');
+    }
+  }
+  
+  // Save sections to file
+  private saveSectionsToFile(): void {
+    try {
+      const sectionsArray = Array.from(this.sections.values());
+      fs.writeFileSync(SECTIONS_FILE, JSON.stringify(sectionsArray, null, 2), 'utf8');
+      console.log(`Saved ${sectionsArray.length} sections to file.`);
+    } catch (error) {
+      console.error('Error saving sections to file:', error);
+    }
   }
   
   // Load bookings from file
@@ -361,20 +409,28 @@ export class MemStorage implements IStorage {
     const section: Section = { 
       ...insertSection, 
       id, 
-      updatedAt: now,
-      // Ensure icon is never undefined
-      icon: insertSection.icon || "fa-file-alt"
+      updatedAt: now
     };
     this.sections.set(id, section);
+    
+    // Save changes to file
+    this.saveSectionsToFile();
+    
     return section;
   }
 
   async updateSection(id: number, content: string): Promise<Section | undefined> {
     const section = this.sections.get(id);
-    if (!section) return undefined;
+    if (!section) {
+      return undefined;
+    }
     
-    const now = new Date();
-    const updatedSection = { ...section, content, updatedAt: now };
+    const updatedSection = { 
+      ...section, 
+      content, 
+      updatedAt: new Date() 
+    };
+    
     this.sections.set(id, updatedSection);
     return updatedSection;
   }
@@ -386,29 +442,39 @@ export class MemStorage implements IStorage {
     icon?: string;
   }): Promise<Section | undefined> {
     const section = this.sections.get(id);
-    if (!section) return undefined;
+    if (!section) {
+      return undefined;
+    }
     
-    // Om vi uppdaterar slug, kontrollera så att det inte redan finns
+    // Check for slug uniqueness if updating slug
     if (data.slug && data.slug !== section.slug) {
-      const existingSection = await this.getSectionBySlug(data.slug);
-      if (existingSection && existingSection.id !== id) {
-        throw new Error("A section with this slug already exists");
+      const existingWithSlug = await this.getSectionBySlug(data.slug);
+      if (existingWithSlug && existingWithSlug.id !== id) {
+        throw new Error(`A section with slug "${data.slug}" already exists.`);
       }
     }
     
-    const now = new Date();
     const updatedSection = { 
-      ...section, 
+      ...section,
       ...data,
-      updatedAt: now 
+      updatedAt: new Date() 
     };
     
     this.sections.set(id, updatedSection);
+    // Save sections to file after updating
+    this.saveSectionsToFile();
     return updatedSection;
   }
   
   async deleteSection(id: number): Promise<boolean> {
-    return this.sections.delete(id);
+    if (!this.sections.has(id)) {
+      return false;
+    }
+    
+    this.sections.delete(id);
+    // Save sections to file after deleting
+    this.saveSectionsToFile();
+    return true;
   }
 }
 
