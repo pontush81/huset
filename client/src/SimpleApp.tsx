@@ -74,7 +74,7 @@ const EditSection = ({
   debugMode = false
 }: { 
   section: Section, 
-  onSave: (updatedSection: Partial<Section>) => void, 
+  onSave: (updatedSection: Partial<Section>) => Promise<void>, 
   onCancel: () => void,
   debugMode?: boolean
 }) => {
@@ -84,36 +84,77 @@ const EditSection = ({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [savedLocally, setSavedLocally] = useState(false);
 
+  // Use a cleanup function to prevent state updates after unmounting
+  const isMountedRef = React.useRef(true);
+  
+  React.useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const updateSavingState = (value: boolean) => {
+    if (isMountedRef.current) {
+      setSaving(value);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
+    
+    // Reset state
+    updateSavingState(true);
     setError(null);
     setSaveSuccess(false);
     setSavedLocally(false);
 
     try {
+      console.log('Submitting section edit:', section.id);
+      
+      // Validate content before saving
+      if (typeof content !== 'string') {
+        throw new Error('Content must be a string');
+      }
+      
+      // Call the onSave handler passed from the parent
       await onSave({ content });
+      
       // If we reach here, the save was successful
-      setSaveSuccess(true);
+      if (isMountedRef.current) {
+        setSaveSuccess(true);
+        setSavedLocally(debugMode);
+      }
       
       // If in debug mode, keep the form open
-      if (!debugMode) {
+      if (!debugMode && isMountedRef.current) {
         setTimeout(() => {
-          onCancel();
+          if (isMountedRef.current) {
+            onCancel();
+          }
         }, 1500);
       }
-    } catch (err: any) {
-      console.error('Error saving section:', err);
-      setError(err.message || "Det gick inte att spara ändringarna. Försök igen.");
-      setSaving(false);
+    } catch (err: unknown) {
+      console.error('Error in EditSection handleSubmit:', err);
       
-      // Check if error message indicates local saving
-      if (err.message && (
-        err.message.includes('sparats lokalt') || 
-        err.message.includes('404') || 
-        err.message.includes('401')
-      )) {
-        setSavedLocally(true);
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : "Det gick inte att spara ändringarna. Försök igen.";
+      
+      if (isMountedRef.current) {
+        setError(errorMessage);
+        updateSavingState(false);
+        
+        // Check if error message indicates local saving
+        const errString = String(errorMessage).toLowerCase();
+        if (
+          errString.includes('sparats lokalt') || 
+          errString.includes('404') || 
+          errString.includes('401') ||
+          errString.includes('api') ||
+          errString.includes('saved locally')
+        ) {
+          setSavedLocally(true);
+        }
       }
     }
   };
@@ -487,6 +528,14 @@ const App = () => {
   const [debugMode, setDebugMode] = useState(false);
   const [apiAvailable, setApiAvailable] = useState(true);
   
+  // Keep a ref to current sections to avoid stale closure issues
+  const sectionsRef = React.useRef<Section[]>([]);
+  
+  // Update the ref whenever sections change
+  React.useEffect(() => {
+    sectionsRef.current = sections;
+  }, [sections]);
+  
   // New state for mobile menu
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -563,9 +612,9 @@ const App = () => {
         setLoading(false);
       } catch (err) {
         console.error('===== ERROR FETCHING SECTIONS =====');
-        console.error('Error type:', err.constructor.name);
-        console.error('Error message:', err.message);
-        console.error('Error stack:', err.stack);
+        console.error('Error type:', err instanceof Error ? err.constructor.name : 'Unknown');
+        console.error('Error message:', err instanceof Error ? err.message : String(err));
+        console.error('Error stack:', err instanceof Error ? err.stack : 'No stack trace');
         console.error('Error fetching sections:', err);
         
         setError('Failed to load sections. Please try again later.');
@@ -595,160 +644,242 @@ const App = () => {
     fetchSections();
   }, []);
 
-  // Update active section when slug changes
+  // Update active section when slug changes - complete refactor with validation
   useEffect(() => {
-    if (activeSectionSlug && sections.length > 0) {
-      const section = sections.find((s) => s.slug === activeSectionSlug);
-      setActiveSection(section || null);
+    console.log('===== UPDATING ACTIVE SECTION =====');
+    console.log('Active section slug:', activeSectionSlug);
+    console.log('Sections count:', sections?.length || 0);
+    
+    if (!activeSectionSlug) {
+      console.log('No active slug, setting active section to null');
+      setActiveSection(null);
+      return;
+    }
+    
+    if (!Array.isArray(sections) || sections.length === 0) {
+      console.log('No sections available, setting active section to null');
+      setActiveSection(null);
+      return;
+    }
+    
+    // Use find with validation
+    const foundSection = sections.find(s => s && s.slug === activeSectionSlug);
+    
+    if (!foundSection) {
+      console.warn(`No section found with slug: ${activeSectionSlug}`);
+      setActiveSection(null);
+      return;
+    }
+    
+    // Final validation before setting
+    if (isValidSection(foundSection)) {
+      console.log(`Setting active section: ${foundSection.title} (ID: ${foundSection.id})`);
+      setActiveSection(foundSection);
     } else {
+      console.error('Found section is invalid:', foundSection);
       setActiveSection(null);
     }
   }, [activeSectionSlug, sections]);
 
-  const handleEditSection = (section: Section) => {
-    setEditingSection(section);
+  // COMPLETELY REFACTORED - Edit section handler
+  const handleEditSection = (section: Section | null) => {
+    console.log('===== EDIT SECTION INITIATED =====');
+    
+    if (!section) {
+      console.error('Attempted to edit null/undefined section');
+      return;
+    }
+    
+    if (!isValidSection(section)) {
+      console.error('Attempted to edit invalid section:', section);
+      return;
+    }
+    
+    console.log(`Setting editing section: ${section.title} (ID: ${section.id})`);
+    setEditingSection({...section}); // Create a copy to avoid reference issues
   };
 
-  const handleSaveSection = async () => {
-    console.log('===== SAVING SECTION =====');
+  // COMPLETELY REFACTORED - Save section handler with comprehensive validation
+  const handleSaveSection = async (updatedContent: string) => {
+    console.log('===== SAVE SECTION INITIATED =====');
     
-    // Safety check - ensure we have a section to edit
-    if (!editingSection) {
-      console.error('No editing section found - cannot save!');
-      throw new Error('No editing section found');
-    }
-    
-    const sectionToUpdate = { ...editingSection };
-    console.log('Section to update:', sectionToUpdate);
-    
-    // Safety check - validate section has the required properties
-    if (!sectionToUpdate || typeof sectionToUpdate.id !== 'number') {
-      console.error('Invalid section to update:', sectionToUpdate);
-      throw new Error('Invalid section data - missing id');
-    }
-    
-    // Always update the local state first (optimistic update)
     try {
-      // Update local state optimistically
-      console.log('Updating sections in state');
-      setSections(currentSections => {
-        // Safety check - validate current sections are valid
-        if (!Array.isArray(currentSections)) {
-          console.error('Current sections is not an array:', currentSections);
-          return [sectionToUpdate]; // Return just the current section if no valid array
-        }
-        
-        // Create new array with updated section
-        const newSections = currentSections.map(section => {
-          // Safety check - skip null/undefined sections
-          if (!section) {
-            console.warn('Found null/undefined section while mapping');
-            return null; // Will be filtered out later
-          }
-          
-          // Update the matching section
-          return section.id === sectionToUpdate.id ? sectionToUpdate : section;
-        }).filter(Boolean); // Filter out any null values
-        
-        console.log('Updated sections count:', newSections.length);
-        return newSections;
-      });
+      // Check if we have an editing section
+      if (!editingSection) {
+        const error = new Error('No section is currently being edited');
+        console.error(error.message);
+        throw error;
+      }
       
-      // Capture current sections for local storage update
-      // This happens after the state update but before API call
-      const currentSections = sections.filter(section => section && typeof section.id === 'number');
+      console.log(`Saving section ID: ${editingSection.id}, Title: ${editingSection.title}`);
       
-      console.log('Valid sections for localStorage:', currentSections.length);
+      // Create an updated copy with the new content and timestamp
+      const updatedSection: Section = {
+        ...editingSection,
+        content: updatedContent,
+        updatedAt: new Date().toISOString()
+      };
       
-      // Always update localStorage immediately
-      localStorageHelpers.saveSections(currentSections);
+      console.log('Updated section data:', updatedSection);
       
-      // Call API in the background
-      let apiAvailable = true;
-      let apiResponseData;
+      // Validate the updated section
+      if (!isValidSection(updatedSection)) {
+        const error = new Error('Updated section data is invalid');
+        console.error(error.message, updatedSection);
+        throw error;
+      }
       
+      // Step 1: Get current sections safely (with validation)
+      // Use sectionsRef to avoid stale closure issues
+      const currentSections = sectionsRef.current || [];
+      console.log('Current sections count:', currentSections.length);
+      
+      // Step 2: Create a new array with only valid sections
+      const validSections = currentSections.filter(isValidSection);
+      if (validSections.length !== currentSections.length) {
+        console.warn(`Filtered out ${currentSections.length - validSections.length} invalid sections`);
+      }
+      
+      // Step 3: Create new array with updated section
+      const updatedSections = validSections.map(section => 
+        section.id === updatedSection.id ? updatedSection : section
+      );
+      
+      console.log('Updated sections array count:', updatedSections.length);
+      
+      // Step 4: Update local state immediately (optimistic update)
+      setSections(updatedSections);
+      
+      // If the active section was the one being edited, update it too
+      if (activeSection && activeSection.id === updatedSection.id) {
+        console.log('Updating active section with new content');
+        setActiveSection(updatedSection);
+      }
+      
+      // Step 5: Always save to localStorage (critical fallback)
+      console.log('Saving updated sections to localStorage');
+      localStorageHelpers.saveSections(updatedSections);
+      
+      // Step 6: Clear editing mode
+      setEditingSection(null);
+      
+      // Step 7: Try API update in the background
+      if (debugMode) {
+        console.log('Debug mode active - skipping API update');
+        return;
+      }
+      
+      // Continue with API update
       try {
-        // Create headers with auth if available
+        console.log('Attempting API update');
+        
+        // Set up headers with auth token if available
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
         };
         
-        // Add auth token if available (prevents 401 errors)
-        const token = authToken;
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        } else {
-          console.warn('No authentication token available');
+        if (authToken) {
+          headers['Authorization'] = `Bearer ${authToken}`;
+          console.log('Added auth token to request');
         }
         
-        console.log('Calling API to update section');
+        // Make the API request
         const response = await fetch('/api/sections', {
           method: 'PUT',
           headers,
-          body: JSON.stringify({ section: sectionToUpdate })
+          body: JSON.stringify({ section: updatedSection })
         });
         
         if (!response.ok) {
           console.error(`API error: ${response.status} ${response.statusText}`);
-          apiAvailable = false;
-        } else {
+          throw new Error(`API error: ${response.status} ${response.statusText}. Data saved locally.`);
+        }
+        
+        // Handle API response
+        const responseText = await response.text();
+        
+        // Try to parse the response, but handle empty responses
+        let apiResponseData;
+        if (responseText && responseText.trim()) {
           try {
-            const jsonData = await response.json();
+            apiResponseData = JSON.parse(responseText);
+            console.log('API response:', apiResponseData);
             
-            // Safety check - validate response data
-            if (!jsonData || !Array.isArray(jsonData.sections)) {
-              console.error('Invalid API response format:', jsonData);
-              apiAvailable = false;
-            } else {
-              apiResponseData = jsonData.sections;
-              console.log('API response sections count:', apiResponseData.length);
+            // If response includes updated sections, replace the state
+            if (apiResponseData && Array.isArray(apiResponseData.sections)) {
+              // Validate all sections in the response
+              const validApiSections = apiResponseData.sections.filter(isValidSection);
               
-              // Safety validation - filter out any invalid sections in the response
-              const validApiSections = apiResponseData.filter(section => 
-                section && typeof section.id === 'number'
-              );
-              
-              if (validApiSections.length < apiResponseData.length) {
-                console.warn(`Filtered out ${apiResponseData.length - validApiSections.length} invalid sections from API response`);
-                apiResponseData = validApiSections;
+              if (validApiSections.length > 0) {
+                console.log('Updating sections with API response data');
+                setSections(validApiSections);
+              } else {
+                console.warn('API returned no valid sections, keeping local changes');
               }
             }
-          } catch (parseError) {
-            console.error('Error parsing API response:', parseError);
-            apiAvailable = false;
+          } catch (jsonError) {
+            console.error('Failed to parse API response:', jsonError);
+            console.log('Raw response:', responseText);
           }
+        } else {
+          console.log('Empty API response, keeping local changes');
         }
-      } catch (error) {
-        console.error('API request failed:', error);
-        apiAvailable = false;
+        
+      } catch (apiError) {
+        console.error('API update failed:', apiError);
+        setApiAvailable(false);
+        // We don't rethrow here because we've already updated locally
+        // This prevents the user from seeing an error when their data is actually saved locally
       }
       
-      // If API is available and we got valid data, do a final state update
-      if (apiAvailable && apiResponseData) {
-        console.log('Updating state with API response data');
-        setSections(apiResponseData);
-      } else {
-        console.warn('API unavailable or invalid response - using local data only');
-        // State already updated optimistically above
-      }
-      
-      // Always end editing mode
-      setEditingSection(null);
-      
-      console.log('Section save completed');
     } catch (error) {
       console.error('Error in handleSaveSection:', error);
-      alert(`Error saving section: ${error instanceof Error ? error.message : String(error)}`);
+      // Rethrow to be handled by the EditSection component
+      throw error;
     }
   };
 
   const handleCancelEdit = () => {
+    console.log('Edit canceled, clearing editing section');
     setEditingSection(null);
   };
 
-  // Add defensive coding to filter out invalid sections before any operations
-  const validSections = sections.filter(section => section && typeof section.id === 'number');
+  // REFACTORED: Add defensive coding to filter out invalid sections
+  const validSections = Array.isArray(sections) 
+    ? sections.filter(isValidSection)
+    : [];
   
+  if (validSections.length !== sections.length) {
+    console.warn(`Using ${validSections.length} valid sections out of ${sections.length} total sections`);
+  }
+  
+  // Refactored EditSection to work with the new approach
+  const EditSectionWrapper = () => {
+    if (!editingSection) {
+      return null;
+    }
+    
+    // Create a modified onSave handler that works with our refactored flow
+    const handleSave = async (updateData: Partial<Section>) => {
+      if (typeof updateData.content !== 'string') {
+        throw new Error('Updated content is missing or invalid');
+      }
+      
+      return handleSaveSection(updateData.content);
+    };
+    
+    return (
+      <div className="flex-1 p-4 md:p-8 overflow-auto">
+        <EditSection 
+          section={editingSection}
+          onSave={handleSave}
+          onCancel={handleCancelEdit}
+          debugMode={debugMode}
+        />
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -822,14 +953,7 @@ const App = () => {
           setIsMobileMenuOpen={setIsMobileMenuOpen}
         />
         {editingSection ? (
-          <div className="flex-1 p-4 md:p-8 overflow-auto">
-            <EditSection 
-              section={editingSection}
-              onSave={handleSaveSection}
-              onCancel={handleCancelEdit}
-              debugMode={debugMode}
-            />
-          </div>
+          <EditSectionWrapper />
         ) : (
           <Content 
             section={activeSection} 
