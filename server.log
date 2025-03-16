@@ -1,2 +1,8 @@
+Loaded 10 sections from file.
 Loaded 17 bookings from file.
-11:13:56 AM [express] Server running at http://localhost:5000
+12:18:59 PM [express] Server running at http://localhost:5001
+12:18:59 PM [express] Test file created at: /Users/pontus.horberg-Local/Documents/GitHub/huset/data/server-test.json
+12:19:31 PM [express] GET /api/sections 200 in 2ms :: [{"title":"Aktivitetsrum","slug":"aktivitetsrum…
+12:19:39 PM [express] GET /api/sections 200 in 0ms :: [{"title":"Aktivitetsrum","slug":"aktivitetsrum…
+12:19:39 PM [express] GET /api/sections 304 in 0ms :: [{"title":"Aktivitetsrum","slug":"aktivitetsrum…
+12:19:46 PM [express] PUT /api/sections 200 in 5ms

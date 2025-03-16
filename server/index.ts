@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import path from "path";
+import fs from "fs";
 
 const app = express();
 app.use(express.json());
@@ -61,5 +63,14 @@ app.use((req, res, next) => {
   const PORT = process.env.PORT || 5001;
   server.listen({ port: PORT, host: '127.0.0.1' }, () => {
     log(`Server running at http://localhost:${PORT}`);
+    
+    // Lägg till detta för att testa filsystemet vid uppstart
+    try {
+      const testFile = path.join(process.cwd(), 'data', 'server-test.json');
+      fs.writeFileSync(testFile, JSON.stringify({ serverStarted: new Date() }), 'utf8');
+      log(`Test file created at: ${testFile}`);
+    } catch (error) {
+      log('ERROR creating test file:', error);
+    }
   });
 })();

@@ -1,0 +1,82 @@
+[
+  {
+    "title": "Aktivitetsrum",
+    "slug": "aktivitetsrum",
+    "content": "Uppdaterad information om aktivitetsrummet med filsparning.",
+    "icon": "fa-running",
+    "id": 1,
+    "updatedAt": "2025-03-16T11:15:38.493Z"
+  },
+  {
+    "title": "Elbil",
+    "slug": "elbil",
+    "content": "Information om laddstationer för elbilar i föreningen.",
+    "icon": "fa-car-side",
+    "id": 2,
+    "updatedAt": "2025-03-16T11:09:53.356Z"
+  },
+  {
+    "title": "Ellagården",
+    "slug": "ellagarden",
+    "content": "Allmän information om bostadsrättsföreningen Ellagården.",
+    "icon": "fa-home",
+    "id": 3,
+    "updatedAt": "2025-03-16T11:09:53.356Z"
+  },
+  {
+    "title": "Stämma",
+    "slug": "stamma",
+    "content": "Information om föreningens årsstämma och extra stämmor.",
+    "icon": "fa-users",
+    "id": 4,
+    "updatedAt": "2025-03-16T11:09:53.356Z"
+  },
+  {
+    "title": "Grillregler",
+    "slug": "grillregler",
+    "content": "Regler för grillning på balkonger och i gemensamma utrymmen.",
+    "icon": "fa-fire",
+    "id": 5,
+    "updatedAt": "2025-03-16T11:09:53.356Z"
+  },
+  {
+    "title": "Gästlägenhet",
+    "slug": "gastlagenhet",
+    "content": "Vår förening har en gästlägenhet som medlemmar kan boka för sina gäster. Lägenheten ligger på bottenplan i hus 3 och har plats för upp till 4 personer.",
+    "icon": "fa-bed",
+    "id": 6,
+    "updatedAt": "2025-03-16T11:09:53.356Z"
+  },
+  {
+    "title": "Färgkoder",
+    "slug": "fargkoder",
+    "content": "Färgkoder för målning av dörrar, fönster och andra detaljer i föreningen.",
+    "icon": "fa-paint-brush",
+    "id": 7,
+    "updatedAt": "2025-03-16T11:09:53.356Z"
+  },
+  {
+    "title": "Sophantering",
+    "slug": "sophantering",
+    "content": "Information om sophantering, återvinning och miljörum.",
+    "icon": "fa-trash-alt",
+    "id": 8,
+    "updatedAt": "2025-03-16T11:09:53.356Z"
+  },
+  {
+    "title": "Styrelse",
+    "slug": "styrelse",
+    "content": "Information om föreningens styrelse och kontaktuppgifter.",
+    "icon": "fa-users-cog",
+    "id": 9,
+    "updatedAt": "2025-03-16T11:09:53.356Z"
+  },
+  {
+    "title": "Sidfot",
+    "slug": "footer",
+    "content": "{\"address\":\"Ellagårdsvägen 123\",\"email\":\"styrelsen@ellagarden.se\",\"phone\":\"08-123 45 67\",\"copyright\":\"BRF Ellagården. Alla rättigheter förbehållna.\"}",
+    "icon": "fa-shoe-prints",
+    "id": 10,
+    "updatedAt": "2025-03-16T11:09:53.356Z"
+  }
+]

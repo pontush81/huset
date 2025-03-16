@@ -116,46 +116,69 @@ const defaultSections = [
   }
 ];
 
-// File path for storing sections
-const SECTIONS_FILE_PATH = '/Users/pontus.horberg-Local/Documents/GitHub/huset/data/sections.json';
-// Function to load sections from file
+// Lägg till mer detaljerad loggning för filoperationer
+const SECTIONS_FILE_PATH = path.join(process.cwd(), 'data', 'sections.json');
+console.log('Sections file path:', SECTIONS_FILE_PATH);
+
+// Förbättrad version av loadSectionsFromFile
 const loadSectionsFromFile = (): any[] => {
   try {
-    // Create data directory if it doesn't exist
-    if (!fs.existsSync(path.dirname(SECTIONS_FILE_PATH))) {
-      fs.mkdirSync(path.dirname(SECTIONS_FILE_PATH), { recursive: true });
+    console.log('Loading sections from file...');
+    console.log('Current directory:', process.cwd());
+    
+    // Skapa data-mappen om den inte finns
+    const dataDir = path.dirname(SECTIONS_FILE_PATH);
+    if (!fs.existsSync(dataDir)) {
+      console.log(`Creating directory: ${dataDir}`);
+      fs.mkdirSync(dataDir, { recursive: true });
+    } else {
+      console.log(`Directory exists: ${dataDir}`);
     }
     
-    // Read from file if it exists
+    // Läs från filen om den finns
     if (fs.existsSync(SECTIONS_FILE_PATH)) {
+      console.log(`Reading from existing file: ${SECTIONS_FILE_PATH}`);
       const data = fs.readFileSync(SECTIONS_FILE_PATH, 'utf8');
-      console.log(`Loaded ${JSON.parse(data).length} sections from file`);
-      return JSON.parse(data);
+      try {
+        const parsedData = JSON.parse(data);
+        console.log(`Successfully loaded ${parsedData.length} sections from file`);
+        return parsedData;
+      } catch (parseError) {
+        console.error('Error parsing JSON from file:', parseError);
+        return [...defaultSections];
+      }
+    } else {
+      console.log(`File doesn't exist, using default sections: ${SECTIONS_FILE_PATH}`);
+      fs.writeFileSync(SECTIONS_FILE_PATH, JSON.stringify(defaultSections, null, 2), 'utf8');
+      console.log(`Created new file with ${defaultSections.length} default sections`);
+      return [...defaultSections];
     }
-    
-    // If file doesn't exist, use default data and save it
-    fs.writeFileSync(SECTIONS_FILE_PATH, JSON.stringify(defaultSections, null, 2));
-    console.log(`Initialized file with ${defaultSections.length} default sections`);
-    return [...defaultSections];
   } catch (error) {
-    console.error('Error loading sections from file:', error);
+    console.error('Critical error loading sections from file:', error);
     return [...defaultSections];
   }
 };
 
-// Function to save sections to file
+// Förbättrad version av saveSectionsToFile
 const saveSectionsToFile = (sectionsData: any[]): void => {
   try {
-    // Create data directory if it doesn't exist
-    if (!fs.existsSync(path.dirname(SECTIONS_FILE_PATH))) {
-      fs.mkdirSync(path.dirname(SECTIONS_FILE_PATH), { recursive: true });
+    console.log(`Attempting to save ${sectionsData.length} sections to file...`);
+    
+    // Skapa data-mappen om den inte finns
+    const dataDir = path.dirname(SECTIONS_FILE_PATH);
+    if (!fs.existsSync(dataDir)) {
+      console.log(`Creating directory: ${dataDir}`);
+      fs.mkdirSync(dataDir, { recursive: true });
     }
     
-    // Save to file
-    fs.writeFileSync(SECTIONS_FILE_PATH, JSON.stringify(sectionsData, null, 2));
-    console.log(`Saved ${sectionsData.length} sections to file`);
+    // Spara till filen
+    const jsonData = JSON.stringify(sectionsData, null, 2);
+    console.log(`Writing ${jsonData.length} bytes to: ${SECTIONS_FILE_PATH}`);
+    fs.writeFileSync(SECTIONS_FILE_PATH, jsonData, 'utf8');
+    console.log(`Successfully saved ${sectionsData.length} sections to file`);
   } catch (error) {
-    console.error('Error saving sections to file:', error);
+    console.error('Critical error saving sections to file:', error);
+    console.error(error.stack);
   }
 };
 
@@ -183,6 +206,8 @@ app.get('/api/sections/:slug', (req, res) => {
 // PUT endpoint to update a section by ID
 app.put('/api/sections/:id', (req, res) => {
   console.log('PUT /api/sections/:id called with ID:', req.params.id);
+  console.log('Request body:', JSON.stringify(req.body));
+  
   const { id } = req.params;
   const updateData = req.body;
   
@@ -199,9 +224,9 @@ app.put('/api/sections/:id', (req, res) => {
     updatedAt: new Date().toISOString() 
   };
   
-  console.log('Trying to save section with ID:', id);
+  console.log('About to save sections after update...');
   saveSectionsToFile(sections);
-  console.log('Finished saving sections');
+  console.log('Sections saved successfully');
   
   res.json(sections[index]);
 });
@@ -339,6 +364,41 @@ app.patch('/api/admin/sections/:id', (req, res) => {
   // Save changes to file
   saveSectionsToFile(sections);
   
+  res.json(sections[index]);
+});
+
+// ADD THIS NEW ENDPOINT: General PUT endpoint for /api/sections (the one client calls)
+app.put('/api/sections', (req, res) => {
+  console.log('PUT /api/sections (general) called with body:', JSON.stringify(req.body).substring(0, 100) + '...');
+  
+  const { section } = req.body;
+  
+  if (!section || typeof section.id !== 'number') {
+    console.error('Invalid data received in PUT /api/sections:', req.body);
+    return res.status(400).json({ error: "Invalid section data, missing id" });
+  }
+  
+  const index = sections.findIndex(s => s.id === section.id);
+  
+  if (index === -1) {
+    console.error(`Section with ID ${section.id} not found!`);
+    return res.status(404).json({ error: "Section not found" });
+  }
+  
+  // Update the section
+  console.log(`Updating section ID ${section.id} with new data`);
+  sections[index] = {
+    ...sections[index],
+    ...section,
+    updatedAt: new Date().toISOString()
+  };
+  
+  // SAVE TO FILE - Important part!
+  console.log('Saving updated sections to file...');
+  saveSectionsToFile(sections);
+  console.log('Sections saved to file successfully');
+  
+  console.log(`Returning updated section ${section.id}`);
   res.json(sections[index]);
 });
 
