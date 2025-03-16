@@ -424,7 +424,7 @@ const localStorageHelpers = {
 // Utility function to safely debug log complex objects
 const safeLog = (label: string, data: any) => {
   try {
-    console.log(`${label}:`, 
+    console.log(`${label} [v1.1]:`, 
       JSON.stringify(data, (key, value) => 
         value === undefined ? 'undefined' : value, 2)
     );
