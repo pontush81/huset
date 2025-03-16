@@ -199,8 +199,9 @@ app.put('/api/sections/:id', (req, res) => {
     updatedAt: new Date().toISOString() 
   };
   
-  // Save changes to file
+  console.log('Trying to save section with ID:', id);
   saveSectionsToFile(sections);
+  console.log('Finished saving sections');
   
   res.json(sections[index]);
 });
@@ -224,8 +225,9 @@ app.patch('/api/sections/:id', (req, res) => {
     updatedAt: new Date().toISOString() 
   };
   
-  // Save changes to file
+  console.log('Trying to save section with ID:', id);
   saveSectionsToFile(sections);
+  console.log('Finished saving sections');
   
   res.json(sections[index]);
 });
