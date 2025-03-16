@@ -745,6 +745,24 @@ const App = () => {
         throw error;
       }
       
+      // ULTRA DEFENSIVE - Get a fresh copy of current sections and verify section exists
+      const currentSections = sectionsRef.current || [];
+      console.log(`Verifying section ID ${editingSection.id} exists in current state`);
+      
+      // Check section exists in current state (not just local storage)
+      const freshSectionCheck = Array.isArray(currentSections) 
+        ? currentSections.find(s => s && s.id === editingSection.id)
+        : null;
+      
+      if (!freshSectionCheck) {
+        console.error(`Section ID ${editingSection.id} not found in current state`);
+        console.log('Available section IDs:', 
+          Array.isArray(currentSections) 
+            ? currentSections.filter(s => s && typeof s.id === 'number').map(s => s.id).join(', ') 
+            : 'NONE');
+        throw new Error(`Section not found. The section may have been deleted or isn't available in the current state.`);
+      }
+      
       console.log(`Saving section ID: ${editingSection.id}, Title: ${editingSection.title}`);
       
       // Create an updated copy with the new content and timestamp
@@ -763,9 +781,23 @@ const App = () => {
         throw error;
       }
       
+      // CRITICAL - Save to local storage FIRST before attempting API update
+      // This ensures data is never lost even if API or state update fails
+      try {
+        console.log('Saving to localStorage as backup');
+        const localSections = localStorageHelpers.getSavedSections();
+        const updatedLocalSections = Array.isArray(localSections) 
+          ? localSections.map(s => s.id === updatedSection.id ? updatedSection : s)
+          : [updatedSection];
+        localStorageHelpers.saveSections(updatedLocalSections);
+        console.log('Successfully saved to localStorage');
+      } catch (localError) {
+        console.error('Failed to save to localStorage:', localError);
+        // Continue despite localStorage error - we can still update state and API
+      }
+      
       // Step 1: Get current sections safely (with validation)
       // Use sectionsRef to avoid stale closure issues
-      const currentSections = sectionsRef.current || [];
       console.log('Current sections count:', currentSections.length);
       
       // Step 2: Create a new array with only valid sections
@@ -778,6 +810,7 @@ const App = () => {
       }
       
       // Step 3: Create new array with updated section - USING SAFE MAP UTILITY
+      console.log(`Updating sections array with new content for section ID: ${updatedSection.id}`);
       const updatedSections = safeMapSections(validSections, section => 
         section.id === updatedSection.id ? updatedSection : section
       );
@@ -813,6 +846,12 @@ const App = () => {
         console.log('API Available flag:', apiAvailable ? 'YES' : 'NO');
         console.log('Auth token present:', authToken ? 'YES' : 'NO');
         
+        // Fast circuit breaker - if API is known to be unavailable, fail fast
+        if (!apiAvailable) {
+          console.log('API is known to be unavailable, skipping update request');
+          return; // Exit early but don't throw - user still has local data
+        }
+        
         // Set up headers with auth token if available
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
@@ -836,56 +875,66 @@ const App = () => {
           body: { section: { ...updatedSection, content: updatedSection.content.substring(0, 50) + '...' } }
         });
         
-        // Try both API endpoints that might work
+        // Try different API endpoints with different methods
         let apiEndpoints = [
-          '/api/sections', 
-          '/api/admin/sections'
+          { url: '/api/sections', method: 'PUT' },
+          { url: '/api/admin/sections', method: 'PUT' },
+          { url: `/api/sections/${updatedSection.id}`, method: 'PUT' },
+          { url: `/api/admin/sections/${updatedSection.id}`, method: 'PUT' },
+          { url: `/api/admin/sections/${updatedSection.id}`, method: 'PATCH' }
         ];
         
         let succeeded = false;
         let responseData = null;
         
-        // Try each endpoint until one works
+        // Try each endpoint until one works (with timeout)
         for (const endpoint of apiEndpoints) {
           try {
-            console.log(`Trying API endpoint: ${endpoint}`);
+            console.log(`Trying API endpoint: ${endpoint.url} with method ${endpoint.method}`);
             
-            const response = await fetch(endpoint, {
-              method: 'PUT',
+            // Set a timeout for this request
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('API request timed out')), 5000)
+            );
+            
+            const fetchPromise = fetch(endpoint.url, {
+              method: endpoint.method,
               headers,
               body: JSON.stringify({ section: updatedSection })
             });
             
-            console.log(`Response status from ${endpoint}:`, response.status, response.statusText);
+            const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
+            
+            console.log(`Response status from ${endpoint.url}:`, response.status, response.statusText);
             
             if (response.ok) {
-              console.log(`Successful response from ${endpoint}`);
+              console.log(`Successful response from ${endpoint.url}`);
               succeeded = true;
               
               // Handle API response
               const responseText = await response.text();
-              console.log(`Raw response from ${endpoint}:`, responseText.substring(0, 200));
+              console.log(`Raw response from ${endpoint.url}:`, responseText.substring(0, 200));
               
               if (responseText && responseText.trim()) {
                 try {
                   responseData = JSON.parse(responseText);
                   break; // Exit the loop on success
                 } catch (jsonError) {
-                  console.error(`Error parsing JSON from ${endpoint}:`, jsonError);
+                  console.error(`Error parsing JSON from ${endpoint.url}:`, jsonError);
                   // Continue in case response is valid but not JSON
                   responseData = { success: true };
                 }
               } else {
-                console.log(`Empty response from ${endpoint}, considering success`);
+                console.log(`Empty response from ${endpoint.url}, considering success`);
                 responseData = { success: true };
               }
               
               break; // Exit the loop on success
             } else {
-              console.error(`API error from ${endpoint}: ${response.status} ${response.statusText}`);
+              console.error(`API error from ${endpoint.url}: ${response.status} ${response.statusText}`);
             }
           } catch (endpointError) {
-            console.error(`Error calling ${endpoint}:`, endpointError);
+            console.error(`Error calling ${endpoint.url}:`, endpointError);
           }
         }
         
