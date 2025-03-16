@@ -361,6 +361,12 @@ module.exports = async (req, res) => {
               updatedAt: updatedSection.updatedAt
             };
             
+            // Additional validation to ensure we always have a valid ID
+            if (!validatedSection.id || typeof validatedSection.id !== 'number') {
+              console.error('Invalid ID in validatedSection after validation:', validatedSection);
+              validatedSection.id = section.id; // Ensure we use the original ID if the updated one is invalid
+            }
+            
             // Extra logging for debugging
             console.log('Final validated section data being saved:', validatedSection);
             
@@ -525,6 +531,12 @@ module.exports = async (req, res) => {
             icon: updatedSection.icon || section.icon,
             updatedAt: updatedSection.updatedAt
           };
+          
+          // Additional validation to ensure we always have a valid ID
+          if (!validatedSection.id || typeof validatedSection.id !== 'number') {
+            console.error('Invalid ID in validatedSection after validation:', validatedSection);
+            validatedSection.id = section.id; // Ensure we use the original ID if the updated one is invalid
+          }
           
           // Extra logging for debugging
           console.log('Final validated section data being saved:', validatedSection);
