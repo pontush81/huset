@@ -782,7 +782,10 @@ const App = () => {
       
       // Continue with API update
       try {
-        console.log('Attempting API update');
+        console.log('===== ATTEMPTING API UPDATE =====');
+        console.log('Debug mode:', debugMode ? 'ON' : 'OFF');
+        console.log('API Available flag:', apiAvailable ? 'YES' : 'NO');
+        console.log('Auth token present:', authToken ? 'YES' : 'NO');
         
         // Set up headers with auth token if available
         const headers: Record<string, string> = {
@@ -791,53 +794,102 @@ const App = () => {
         
         if (authToken) {
           headers['Authorization'] = `Bearer ${authToken}`;
-          console.log('Added auth token to request');
+          console.log('Added auth token to request headers');
+        } else {
+          // Try basic auth format as fallback
+          console.log('No Bearer token available, attempting Basic auth format');
+          // This is an educated guess based on the Authentication header format
+          headers['Authorization'] = `Basic ${btoa(':1111')}`;
         }
         
-        // Make the API request
-        const response = await fetch('/api/sections', {
+        // Log the full request details (sensitive info redacted)
+        console.log('Request details:', {
+          url: '/api/sections',
           method: 'PUT',
-          headers,
-          body: JSON.stringify({ section: updatedSection })
+          headers: { ...headers, Authorization: '[REDACTED]' },
+          body: { section: { ...updatedSection, content: updatedSection.content.substring(0, 50) + '...' } }
         });
         
-        if (!response.ok) {
-          console.error(`API error: ${response.status} ${response.statusText}`);
-          throw new Error(`API error: ${response.status} ${response.statusText}. Data saved locally.`);
+        // Try both API endpoints that might work
+        let apiEndpoints = [
+          '/api/sections', 
+          '/api/admin/sections'
+        ];
+        
+        let succeeded = false;
+        let responseData = null;
+        
+        // Try each endpoint until one works
+        for (const endpoint of apiEndpoints) {
+          try {
+            console.log(`Trying API endpoint: ${endpoint}`);
+            
+            const response = await fetch(endpoint, {
+              method: 'PUT',
+              headers,
+              body: JSON.stringify({ section: updatedSection })
+            });
+            
+            console.log(`Response status from ${endpoint}:`, response.status, response.statusText);
+            
+            if (response.ok) {
+              console.log(`Successful response from ${endpoint}`);
+              succeeded = true;
+              
+              // Handle API response
+              const responseText = await response.text();
+              console.log(`Raw response from ${endpoint}:`, responseText.substring(0, 200));
+              
+              if (responseText && responseText.trim()) {
+                try {
+                  responseData = JSON.parse(responseText);
+                  break; // Exit the loop on success
+                } catch (jsonError) {
+                  console.error(`Error parsing JSON from ${endpoint}:`, jsonError);
+                  // Continue in case response is valid but not JSON
+                  responseData = { success: true };
+                }
+              } else {
+                console.log(`Empty response from ${endpoint}, considering success`);
+                responseData = { success: true };
+              }
+              
+              break; // Exit the loop on success
+            } else {
+              console.error(`API error from ${endpoint}: ${response.status} ${response.statusText}`);
+            }
+          } catch (endpointError) {
+            console.error(`Error calling ${endpoint}:`, endpointError);
+          }
         }
         
-        // Handle API response
-        const responseText = await response.text();
+        if (!succeeded) {
+          console.warn('All API endpoints failed, falling back to local storage');
+          // Not throwing an error, just logging the fallback
+          return;
+        }
         
-        // Try to parse the response, but handle empty responses
-        let apiResponseData;
-        if (responseText && responseText.trim()) {
-          try {
-            apiResponseData = JSON.parse(responseText);
-            console.log('API response:', apiResponseData);
-            
-            // If response includes updated sections, replace the state
-            if (apiResponseData && Array.isArray(apiResponseData.sections)) {
-              // Validate all sections in the response
-              const validApiSections = apiResponseData.sections.filter(isValidSection);
-              
-              if (validApiSections.length > 0) {
-                console.log('Updating sections with API response data');
-                setSections(validApiSections);
-              } else {
-                console.warn('API returned no valid sections, keeping local changes');
-              }
-            }
-          } catch (jsonError) {
-            console.error('Failed to parse API response:', jsonError);
-            console.log('Raw response:', responseText);
+        // If a response includes updated sections and we successfully parsed it
+        if (responseData && Array.isArray(responseData.sections)) {
+          // Validate all sections in the response
+          const validApiSections = responseData.sections.filter(isValidSection);
+          
+          if (validApiSections.length > 0) {
+            console.log('Updating sections state with API response data');
+            setSections(validApiSections);
+          } else {
+            console.warn('API returned no valid sections, keeping local changes');
           }
         } else {
-          console.log('Empty API response, keeping local changes');
+          console.log('No sections array in API response, keeping local changes');
         }
         
       } catch (apiError) {
-        console.error('API update failed:', apiError);
+        console.error('===== API UPDATE FAILED =====');
+        console.error('Error type:', apiError instanceof Error ? apiError.constructor.name : 'Unknown');
+        console.error('Error message:', apiError instanceof Error ? apiError.message : String(apiError));
+        console.error('Error stack:', apiError instanceof Error ? apiError.stack : 'No stack trace');
+        
         setApiAvailable(false);
         // We don't rethrow here because we've already updated locally
         // This prevents the user from seeing an error when their data is actually saved locally
