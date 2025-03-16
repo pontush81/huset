@@ -155,7 +155,7 @@ const EditSection = ({
       setStatus({
         loading: false,
         error: errorMessage,
-        success: isLocalSave,
+        success: isLocalSave, // Show success even if it's a local-only save
         localOnly: isLocalSave
       });
     }
@@ -182,6 +182,13 @@ const EditSection = ({
           ) : (
             <p>Changes have been saved successfully.</p>
           )}
+        </div>
+      )}
+      
+      {status.error && status.localOnly && (
+        <div className="bg-blue-50 text-blue-700 p-3 rounded mb-4 border-l-4 border-blue-500">
+          <p className="font-bold">Offline Mode</p>
+          <p>Your changes have been saved locally. They will appear in the app, but the server could not be reached.</p>
         </div>
       )}
       
@@ -534,7 +541,8 @@ const App = () => {
   const [apiState, setApiState] = useState({
     isAvailable: true,
     isOffline: false,
-    lastUpdated: new Date()
+    lastUpdated: new Date(),
+    version: "1.2.0" // Version tracker to verify cache is refreshed
   });
   
   // New state for mobile menu
@@ -545,6 +553,9 @@ const App = () => {
 
   // Check for auth token in URL/localStorage
   useEffect(() => {
+    // Log the version to console to verify cache status
+    console.log("BRF Handbook app version:", apiState.version);
+    
     // Try to get token from localStorage first
     const storedToken = localStorage.getItem('brf_handbook_auth_token');
     if (storedToken) {
@@ -867,11 +878,16 @@ const App = () => {
 
       {/* API status indicator */}
       {apiState.isOffline && (
-        <div className="bg-yellow-50 border-b border-yellow-200 p-2 text-center text-sm text-yellow-800">
-          <i className="fas fa-exclamation-triangle mr-2"></i>
-          Server is offline. Changes are saved locally in your browser.
+        <div className="bg-blue-50 border-b border-blue-200 p-2 text-center text-sm text-blue-800">
+          <i className="fas fa-info-circle mr-2"></i>
+          App running in offline mode. Changes are saved locally in your browser.
         </div>
       )}
+
+      {/* Version indicator to verify cache refresh */}
+      <div className="hidden absolute top-0 right-0 text-xs text-gray-400 p-1" data-version={apiState.version}>
+        v{apiState.version}
+      </div>
 
       {/* Overlay for mobile menu */}
       {isMobileMenuOpen && (
