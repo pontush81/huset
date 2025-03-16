@@ -117,8 +117,7 @@ const defaultSections = [
 ];
 
 // File path for storing sections
-const SECTIONS_FILE_PATH = path.join(process.cwd(), 'data', 'sections.json');
-
+const SECTIONS_FILE_PATH = '/Users/pontus.horberg-Local/Documents/GitHub/huset/data/sections.json';
 // Function to load sections from file
 const loadSectionsFromFile = (): any[] => {
   try {
